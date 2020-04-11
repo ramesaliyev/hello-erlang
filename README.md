@@ -1,5 +1,5 @@
 # Hello Erlang!
-These are notes and quotes i take about Erlang while
+These are notes and quotes i take about Erlang while<br>
 reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.com/) book.
 
 # Topics
@@ -65,6 +65,92 @@ reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.c
   an atom is referred to in an `atom table` which consumes memory. atom table is not garbage collected, and so atoms will accumulate until the system tips over, either from **memory usage** or because **1048577** atoms were declared. this means atoms should not be generated dynamically for whatever reason.
 
   some atoms are reserved words: `after`, `and`, `andalso`, `band`, `begin`, `bnot`, `bor`, `bsl`, `bsr`, `bxor`, `case`, `catch`, `cond`, `div`, `end`, `fun`, `if`, `let`, `not`, `of`, `or`, `orelse`, `query`, `receive`, `rem`, `try`, `when`, `xor`
+</details>
+<details>
+  <summary><strong>boolean algebra</strong></summary>
+
+  there is not much to say
+
+    true and false.
+    -> false
+
+    false or true.
+    -> true
+
+    true xor false.
+    -> true
+
+    not false.
+    -> true
+
+    not (true and true).
+    -> false
+
+  the boolean operators `and` and `or` will always evaluate arguments on both sides of the operator. If you want to have the short-circuit operators (which will only evaluate the right-side argument if it needs to), use `andalso` and `orelse`.
+
+  erlang has no such things as boolean `true` and `false`. **the terms true and false are atoms**, *but they are integrated well enough into the language you shouldn't have a problem with that as long as you don't expect false and true to mean anything but false and true.*
+</details>
+<details>
+  <summary><strong>comparison operators</strong></summary>
+
+  - `=:=` exactly equal
+  - `=/=` exactly not equal
+  - `==` equal
+  - `/=` not equal
+  - `<` less than
+  - `>` greather than
+  - `>=` greater than or equal to
+  - `=<` less than or equal to
+
+```
+5 =:= 5.
+-> true
+
+1 =:= 0.
+-> false
+
+1 =/= 0.
+-> true
+
+5 =:= 5.0.
+-> false
+
+5 =:= true.
+-> false
+
+5 == 5.0.
+-> true
+
+5 /= 5.0.
+-> false
+
+1 < 2.
+-> true
+
+1 < 1.
+-> false
+
+1 >= 1.
+-> true
+
+1 =< 1.
+-> true
+
+5 + llama.
+-> ** exception error: bad argument in an arithmetic expression
+```
+
+The correct ordering of each element in a comparison is the following: <br>
+`number` **<** `atom` **<** `reference` **<** `fun` **<** `port` **<** `pid` **<** `tuple` **<** `list` **<** `bit string`
+
+this is why you can compare anything with anything.
+```
+0 == false.
+-> false
+
+1 < false.
+-> true
+```
 </details>
 
 # Definitions
