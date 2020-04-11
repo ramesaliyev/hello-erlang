@@ -48,10 +48,29 @@ reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.c
 
   technically, variables can start with an underscore too, but by convention their use is restricted to values you do not care about, yet you felt it was necessary to document what it contains.
 </details>
+<details>
+  <summary><strong>atoms</strong></summary>
+
+  atoms are literals, constants with their own name for value. an atom should be enclosed in single quotes (') if it does not begin with a lower-case letter or if it contains other characters than alphanumeric characters, underscore or @.
+
+    atom.
+    atoms_rule@erlang.
+    'Atoms can be cheated!'.
+
+  an atom with single quotes is exactly the same as a similar atom without them
+
+    atom = 'atom'.
+    -> atom
+
+  an atom is referred to in an `atom table` which consumes memory. atom table is not garbage collected, and so atoms will accumulate until the system tips over, either from **memory usage** or because **1048577** atoms were declared. this means atoms should not be generated dynamically for whatever reason.
+
+  some atoms are reserved words: `after`, `and`, `andalso`, `band`, `begin`, `bnot`, `bor`, `bsl`, `bsr`, `bxor`, `case`, `catch`, `cond`, `div`, `end`, `fun`, `if`, `let`, `not`, `of`, `or`, `orelse`, `query`, `receive`, `rem`, `try`, `when`, `xor`
+</details>
 
 # Definitions
 <details>
   <summary><strong>referential transparency</strong></summary>
+
   An expression is called referentially transparent if it can be replaced with its corresponding value without changing the program's behavior. This requires that the expression be pure, that is to say the expression value must be the same for the same inputs and its evaluation must have no side effects. An expression that is not referentially transparent is called referentially opaque.
 </details>
 
