@@ -152,6 +152,39 @@ this is why you can compare anything with anything.
 -> true
 ```
 </details>
+<details>
+  <summary><strong>tuples</strong></summary>
+  A tuple is a way to organize data.
+
+    Point = {3,5}.
+
+    {X,Y} = Point.
+    X.
+    -> 3
+    Y.
+    -> 5
+
+    {_,Y2} = Point.
+    Y2.
+    -> 5
+
+  `_` is the anonymous variable. This is exactly how it's meant to be used: to drop the value that would usually be placed there since we won't use it. The _ variable is always seen as unbound and acts as a wildcard for pattern matching.
+
+  Pattern matching to unpack tuples will only work if the number of elements (the tuple's length) is the same.
+
+    {_,_} = {4,5,6}.
+    -> ** exception error: no match of right hand side value {4,5,6}
+
+  Tuples can also be useful when working with single values.
+
+    PreciseTemperature = {celsius, 23.213}.
+    {kelvin, T} = PreciseTemperature.
+    -> ** exception error: no match of right hand side value {celsius,23.213}
+
+  A tuple which contains an atom with one element following it is called a `tagged tuple`.
+
+    {point, {X,Y}}.
+</details>
 
 # Definitions
 <details>
