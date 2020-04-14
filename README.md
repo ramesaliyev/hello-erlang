@@ -185,6 +185,97 @@ this is why you can compare anything with anything.
 
     {point, {X,Y}}.
 </details>
+<details>
+  <summary><strong>lists</strong></summary>
+
+  lists can contain anything and you can mix more than one type of data in it.
+
+    [1, 2, 3, {numbers,[4,5,6]}, 5.34, atom].
+
+  strings are lists and the notation is absolutely the exact same
+
+    [97, 98, 99].
+    -> "abc"
+
+  erlang will print lists of numbers as numbers only when at least one of them could not also represent a letter
+
+    [97,98,99,4,5,6].
+    -> [97,98,99,4,5,6]
+
+    [233].
+    -> "é"
+
+  there is no such thing as a real string in erlang
+
+  glue lists together
+
+    [1,2,3] ++ [4,5].
+    -> [1,2,3,4,5]
+
+  remove elements from a list
+
+    [1,2,3,4,5] -- [1,2,3].
+    -> [4,5]
+
+    [2,4,2] -- [2,4].
+    -> [2]
+
+    [2,4,2] -- [2,4,2].
+    -> []
+
+    [2,3,4,5] -- [3,4].
+    -> [2,5]
+
+    [2,3,4,5] -- [3,5].
+    -> [2,4]
+
+  both `++` and `--` are right-associative
+
+    [1,2,3] -- [1,2] -- [3].
+    -> [3]
+
+    [1,2,3] -- [1,2] -- [2].
+    -> [2,3]
+
+  get length
+
+    length([1,2,3,4]).
+    -> 4
+
+  get head
+
+    hd([1,2,3,4]).
+    -> 1
+
+  get tail
+
+    tl([1,2,3,4]).
+    -> [2,3,4]
+
+  or use pattern matching
+
+    [Head|Tail] = [1,2,3,4].
+
+    Head.
+    -> 1
+
+    Tail.
+    -> [2,3,4]
+
+  add head
+
+    List = [2,3,4].
+    NewList = [1|List].
+    -> [1,2,3,4]
+
+  `|` is named the `cons operator` (constructor),  any list can be built with only cons and values
+
+    [3 | [2 | [1 | []] ] ].
+    -> [3,2,1]
+
+  note: using the form `[1 | 2]` gives what we call an `improper list`. improper lists will work when you pattern match in the `[Head|Tail]` manner, but will fail to be used with standard functions of erlang (even `length()`). this is because erlang expects `proper lists`. proper lists **end with an empty list** as their last cell. when declaring an item like `[2]`, the list is automatically formed in a proper manner. as such, `[1|[2]]` would work! improper lists, although syntactically valid, are of very limited use outside of user-defined data structures.
+
+</details>
 
 # Definitions
 <details>
