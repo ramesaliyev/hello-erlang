@@ -276,6 +276,46 @@ this is why you can compare anything with anything.
   note: using the form `[1 | 2]` gives what we call an `improper list`. improper lists will work when you pattern match in the `[Head|Tail]` manner, but will fail to be used with standard functions of erlang (even `length()`). this is because erlang expects `proper lists`. proper lists **end with an empty list** as their last cell. when declaring an item like `[2]`, the list is automatically formed in a proper manner. as such, `[1|[2]]` would work! improper lists, although syntactically valid, are of very limited use outside of user-defined data structures.
 
 </details>
+<details>
+  <summary><strong>list comprehensions</strong></summary>
+
+  list comprehensions are ways to build or modify lists. it's based off the idea of set notation.
+
+    [2*N || N <- [1,2,3,4]].
+    -> [2,4,6,8]
+
+    [X || X <- [1,2,3,4,5,6,7,8,9,10], X rem 2 =:= 0].
+    -> [2,4,6,8,10]
+
+  the `arrow` acts exactly like the `=` operator, with the exception that **it doesn't throw exceptions**.
+
+    RestaurantMenu = [{steak, 5.99}, {beer, 3.99}, {poutine, 3.50}, {kitten, 20.99}, {water, 0.00}].
+
+    %prices of all the items costing between $3 and $10 with taxes 7%
+    [{Item, Price*1.07} || {Item, Price} <- RestaurantMenu, Price >= 3, Price =< 10].
+
+    -> [{steak,6.4}, {beer,4.3}, {poutine,3.7}]
+
+  recipe for list comprehensions in erlang is therefore; `NewList = [Expression || Pattern <- List, Condition1, Condition2, ... ConditionN]`. the part `Pattern <- List` is named a `generator expression`. you can have more than one.
+
+    [X+Y || X <- [1,2], Y <- [2,3]].
+    -> [3,4,4,5]
+
+  permutation example
+
+    [{X,Y,Z} || X <- [1,2,3], Y <- [1,2,3], Z <- [1,2,3], X =/= Y, Y =/= Z, X =/= Z].
+    -> [{1,2,3}, {1,3,2}, {2,1,3}, {2,3,1}, {3,1,2}, {3,2,1}]
+
+  more generic recipe would be; `NewList = [Expression || GeneratorExp1, GeneratorExp2, ..., GeneratorExpN, Condition1, Condition2, ... ConditionM]`
+
+  expressions coupled with pattern matching also act as a filter:
+
+    Weather = [{toronto, rain}, {montreal, storms}, {london, fog},{paris, sun}, {boston, fog}, {vancouver, snow}].
+
+    FoggyPlaces = [X || {X, fog} <- Weather].
+
+    -> [london,boston]
+</details>
 
 # Definitions
 <details>
