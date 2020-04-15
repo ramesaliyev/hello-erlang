@@ -65,6 +65,8 @@ reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.c
   an atom is referred to in an `atom table` which consumes memory. atom table is not garbage collected, and so atoms will accumulate until the system tips over, either from **memory usage** or because **1048577** atoms were declared. this means atoms should not be generated dynamically for whatever reason.
 
   some atoms are reserved words: `after`, `and`, `andalso`, `band`, `begin`, `bnot`, `bor`, `bsl`, `bsr`, `bxor`, `case`, `catch`, `cond`, `div`, `end`, `fun`, `if`, `let`, `not`, `of`, `or`, `orelse`, `query`, `receive`, `rem`, `try`, `when`, `xor`
+
+  atoms can only be compared and nothing else
 </details>
 <details>
   <summary><strong>boolean algebra</strong></summary>
@@ -315,6 +317,117 @@ this is why you can compare anything with anything.
     FoggyPlaces = [X || {X, fog} <- Weather].
 
     -> [london,boston]
+</details>
+<details>
+  <summary><strong>bit syntax</strong></summary>
+
+  bit syntax encloses binary data between `<<` and `>>`, splits it in readable segments, and each segment is separated by a comma. a segment is a sequence of bits of a binary (not necessarily on a byte boundary, although this is the default behaviour)
+
+    Color = 16#F09A29.
+    -> 15768105
+
+    Pixel = <<Color:24>>.
+    -> <<240,154,41>>
+
+  this basically says **put the binary values of `#F09A29` on `24 bits` of space (red on 8 bits, green on 8 bits and blue also on 8 bits) in the variable Pixel.**
+
+    Pixels = <<213,45,132,64,76,32,76,0,0,234,32,15>>.
+
+    % tell erlang that each variable on the left side will hold 24 bits of data
+    <<Pix1:24, Pix2:24, Pix3:24, Pix4:24>> = Pixels.
+
+    % then take the first pixel and unpack it further into single color values
+    <<R:8, G:8, B:8>> = <<Pix1:24>>.
+    -> <<213,45,132>>
+
+    % take only the first color from the start
+    <<R:8, Rest/binary>> = Pixels.
+    R.
+    -> 213
+
+  more than one way to describe a binary segment is accepted. those are all valid:
+
+- `Value`
+- `Value:Size`
+- `Value/TypeSpecifierList`
+- `Value:Size/TypeSpecifierList`
+
+`Size` is going to represent bits or bytes (depending on `Type` and `Unit` below), and `TypeSpecifierList` represents one or more of the following:
+
+- **Type**
+  - possible values: `integer` | `float` | `binary` | `bytes` | `bitstring` | `bits` | `utf8` | `utf16` | `utf32`
+  - represents the kind of binary data used
+  - `bytes` is shorthand for `binary` and `bits` is shorthand for `bitstring`
+  - default: `integer`
+- **Signedness**
+  - possible values: `signed` | `unsigned`
+  - default: `unsigned`
+- **Endianness**
+  - possible values: `big` | `little` | `native`
+  - only matters when the Type is either `integer`, `utf16`, `utf32`, or `float`
+  - this has to do with **how the system reads binary data**. as an example, the BMP image header format holds the size of its file as an integer stored on `4 bytes`. for a file that has a size of `72` bytes, a `little-endian` system would represent this as `<<72,0,0,0>>` and a `big-endian` one as `<<0,0,0,72>>`. one will be read as `72` while the other will be read as `1207959552`, so make sure you use the right endianness. there is also the option to use `native`, which will choose at run-time if the CPU uses little-endianness or big-endianness natively.
+  - default: `big`
+- **Unit**
+  - written `unit:Integer`
+  - the size of each segment, in bits
+  - allowed range is `1..256`
+  - default is 1 for `integers`, `floats` and `bitstrings` (`bits`)
+  - default is 8 for `binary` (`bytes`)
+  - `utf8`, `utf16` and `utf32` types require no unit to be defined
+  - the multiplication of `Size` by `Unit` is equal to the number of bits the segment will take and must be evenly divisible by `8`. the unit size is usually used to ensure byte-alignment.
+
+`TypeSpecifierList` is built by separating attributes by a `-`
+
+    <<X1/unsigned>> = <<-44>>.
+    X1.
+    -> 212
+
+    <<X2/signed>> = <<-44>>.
+    X2.
+    -> -44
+
+    <<X2/integer-signed-little>> = <<-44>>.
+    X2.
+    -> -44
+
+    <<N:8/unit:1>> = <<72>>.
+    N.
+    -> 72
+
+    <<N/integer>> = <<72>>.
+    N.
+    -> 72
+
+    <<Y:4/little-unit:8>> = <<72,0,0,0>>.
+    Y.
+    -> 72
+
+binary operations:
+
+- `bsl` bit shift left
+- `bsr` bit shift right
+- `band` and
+- `bor` or
+- `bxor` xor
+- `bnot` not
+
+operators could be used as infix operators
+
+    2#00100 = 2#00010 bsl 1.
+    2#00001 = 2#00010 bsr 1.
+    2#10101 = 2#10001 bor 2#00101.
+
+parsing TCP segments example:
+
+    <<SourcePort:16, DestinationPort:16, AckNumber:32,
+    DataOffset:4, _Reserved:4, Flags:8, WindowSize:16,
+    CheckSum: 16, UrgentPointer:16, Payload/binary>> = SomeBinary.
+
+**bit strings:** more efficient in terms of space, because normal lists are linked lists while bit strings are more like C arrays. downside of binary strings compared to lists is a loss in simplicity when it comes to pattern matching and manipulation. people tend to use binary strings when storing text that won't be manipulated too much or when space efficiency is a real issue. dont use strings instead of atoms, or atoms instead of strings. strings can be manipulated (splitting, regular expressions, etc) while atoms can only be compared and nothing else.
+
+    Bitstring = <<"this is a bit string!">>.
+    Bitstring.
+    -> <<"this is a bit string!">>
 </details>
 
 # Definitions
