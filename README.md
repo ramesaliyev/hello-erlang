@@ -429,6 +429,30 @@ parsing TCP segments example:
     Bitstring.
     -> <<"this is a bit string!">>
 </details>
+<details>
+  <summary><strong>binary comprehensions</strong></summary>
+
+  binary comprehensions are to bit syntax what list comprehensions are to lists: a way to make code short and concise
+
+    [X || <<X>> <= <<1,2,3,4,5>>, X rem 2 == 0].
+
+  only change in syntax from regular list comprehensions is the `<-` which became `<=` and using `binaries` `<<>>` instead of `lists` `[]`
+
+    Pixels = <<213,45,132,64,76,32,76,0,0,234,32,15>>.
+    RGB = [{R,G,B} || <<R:8,G:8,B:8>> <= Pixels].
+    RGB.
+    -> [{213,45,132},{64,76,32},{76,0,0},{234,32,15}]
+
+  changing `<-` to `<=` let us use a binary stream as a generator
+
+  binary comprehension syntax to change non-binary data to binary data;
+
+    << <<R:8, G:8, B:8>> ||  {R,G,B} <- RGB >>.
+
+  it is possible to have a binary comprehension with a binary generator
+
+    << <<(X+1)/integer>> || <<X>> <= <<3,7,5,4,7>> >>.
+</details>
 
 # Definitions
 <details>
