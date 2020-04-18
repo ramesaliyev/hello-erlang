@@ -4,9 +4,9 @@ reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.c
 
 # Topics
 <details>
-  <summary><strong>numbers</strong></summary>
+  <summary><strong>numbers</strong></summary><br>
 
-  both floating point numbers or integers are supported when dealing with arithmetic. Integers and floating values are pretty much the only types of data Erlang's mathematical operators will handle transparently for you. to have the integer-to-integer division, use `div`, and to have the modulo operator, use `rem`.
+both floating point numbers or integers are supported when dealing with arithmetic. Integers and floating values are pretty much the only types of data Erlang's mathematical operators will handle transparently for you. to have the integer-to-integer division, use `div`, and to have the modulo operator, use `rem`.
 
     5 / 2.
     -> 2.5
@@ -14,7 +14,7 @@ reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.c
     5 div 2
     -> 2
 
-  to express integers in other bases than base 10, just enter the number as Base#Value (given Base is in the range 2..36):
+to express integers in other bases than base 10, just enter the number as `Base#Value` (given `Base` is in the range `2..36`):
 
     2#101010.
     -> 42
@@ -27,9 +27,9 @@ reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.c
 
 </details>
 <details>
-  <summary><strong>invariable variables</strong></summary>
+  <summary><strong>invariable variables</strong></summary><br>
 
-  variable names must begin with a capital letter. you can assign a value to a variable exactly once. you can `pretend` to assign a value to a variable if it's the same value it already has.
+variable names must begin with a capital letter. you can assign a value to a variable exactly once. you can `pretend` to assign a value to a variable if it's the same value it already has.
 
     One = 1.
     Two = One + One.
@@ -37,41 +37,41 @@ reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.c
     Two = 3.
     -> ** exception error: no match of right hand side value 3
 
-  the `=` operator has the role of comparing values and complaining if they're different. If they're the same, it returns the value.
+the `=` operator has the role of comparing values and complaining if they're different. If they're the same, it returns the value.
 
     47 = 45 + 3.
     -> ** exception error: no match of right hand side value 48
 
-  if the left-hand side term is a variable and it is `unbound` (has no value associated to it), Erlang will automatically bind the right-hand side value to the variable on the left-hand side. The comparison will consequently succeed and the variable will keep the value in memory.
+if the left-hand side term is a variable and it is `unbound` (has no value associated to it), Erlang will automatically bind the right-hand side value to the variable on the left-hand side. The comparison will consequently succeed and the variable will keep the value in memory.
 
-  the `=` operator is the basis of the `pattern matching`
+the `=` operator is the basis of the `pattern matching`
 
-  technically, variables can start with an underscore too, but by convention their use is restricted to values you do not care about, yet you felt it was necessary to document what it contains.
+technically, variables can start with an underscore too, but by convention their use is restricted to values you do not care about, yet you felt it was necessary to document what it contains.
 </details>
 <details>
-  <summary><strong>atoms</strong></summary>
+  <summary><strong>atoms</strong></summary><br>
 
-  atoms are literals, constants with their own name for value. an atom should be enclosed in single quotes (') if it does not begin with a lower-case letter or if it contains other characters than alphanumeric characters, underscore or @.
+atoms are literals, constants with their own name for value. an atom should be enclosed in single quotes (') if it does not begin with a lower-case letter or if it contains other characters than alphanumeric characters, underscore or @.
 
     atom.
     atoms_rule@erlang.
     'Atoms can be cheated!'.
 
-  an atom with single quotes is exactly the same as a similar atom without them
+an atom with single quotes is exactly the same as a similar atom without them
 
     atom = 'atom'.
     -> atom
 
-  an atom is referred to in an `atom table` which consumes memory. atom table is not garbage collected, and so atoms will accumulate until the system tips over, either from **memory usage** or because **1048577** atoms were declared. this means atoms should not be generated dynamically for whatever reason.
+an atom is referred to in an `atom table` which consumes memory. atom table is not garbage collected, and so atoms will accumulate until the system tips over, either from **memory usage** or because **1048577** atoms were declared. this means atoms should not be generated dynamically for whatever reason.
 
-  some atoms are reserved words: `after`, `and`, `andalso`, `band`, `begin`, `bnot`, `bor`, `bsl`, `bsr`, `bxor`, `case`, `catch`, `cond`, `div`, `end`, `fun`, `if`, `let`, `not`, `of`, `or`, `orelse`, `query`, `receive`, `rem`, `try`, `when`, `xor`
+some atoms are reserved words: `after`, `and`, `andalso`, `band`, `begin`, `bnot`, `bor`, `bsl`, `bsr`, `bxor`, `case`, `catch`, `cond`, `div`, `end`, `fun`, `if`, `let`, `not`, `of`, `or`, `orelse`, `query`, `receive`, `rem`, `try`, `when`, `xor`
 
-  atoms can only be compared and nothing else
+atoms can only be compared and nothing else
 </details>
 <details>
-  <summary><strong>boolean algebra</strong></summary>
+  <summary><strong>boolean algebra</strong></summary><br>
 
-  there is not much to say
+there is not much to say
 
     true and false.
     -> false
@@ -88,21 +88,21 @@ reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.c
     not (true and true).
     -> false
 
-  the boolean operators `and` and `or` will always evaluate arguments on both sides of the operator. If you want to have the short-circuit operators (which will only evaluate the right-side argument if it needs to), use `andalso` and `orelse`.
+the boolean operators `and` and `or` will always evaluate arguments on both sides of the operator. If you want to have the short-circuit operators (which will only evaluate the right-side argument if it needs to), use `andalso` and `orelse`.
 
-  erlang has no such things as boolean `true` and `false`. **the terms true and false are atoms**, *but they are integrated well enough into the language you shouldn't have a problem with that as long as you don't expect false and true to mean anything but false and true.*
+erlang has no such things as boolean `true` and `false`. **the terms true and false are atoms**, *but they are integrated well enough into the language you shouldn't have a problem with that as long as you don't expect false and true to mean anything but false and true.*
 </details>
 <details>
-  <summary><strong>comparison operators</strong></summary>
+  <summary><strong>comparison operators</strong></summary><br>
 
-  - `=:=` exactly equal
-  - `=/=` exactly not equal
-  - `==` equal
-  - `/=` not equal
-  - `<` less than
-  - `>` greather than
-  - `>=` greater than or equal to
-  - `=<` less than or equal to
+- `=:=` exactly equal
+- `=/=` exactly not equal
+- `==` equal
+- `/=` not equal
+- `<` less than
+- `>` greather than
+- `>=` greater than or equal to
+- `=<` less than or equal to
 
 ```
 5 =:= 5.
@@ -155,8 +155,8 @@ this is why you can compare anything with anything.
 ```
 </details>
 <details>
-  <summary><strong>tuples</strong></summary>
-  A tuple is a way to organize data.
+  <summary><strong>tuples</strong></summary><br>
+A tuple is a way to organize data.
 
     Point = {3,5}.
 
@@ -170,36 +170,36 @@ this is why you can compare anything with anything.
     Y2.
     -> 5
 
-  `_` is the anonymous variable. this is exactly how it's meant to be used: to drop the value that would usually be placed there since we won't use it. The `_` variable is always seen as unbound and acts as a wildcard for pattern matching.
+`_` is the anonymous variable. this is exactly how it's meant to be used: to drop the value that would usually be placed there since we won't use it. The `_` variable is always seen as unbound and acts as a wildcard for pattern matching.
 
-  pattern matching to unpack tuples will only work if the number of elements (the tuple's length) is the same.
+pattern matching to unpack tuples will only work if the number of elements (the tuple's length) is the same.
 
     {_,_} = {4,5,6}.
     -> ** exception error: no match of right hand side value {4,5,6}
 
-  tuples can also be useful when working with single values.
+tuples can also be useful when working with single values.
 
     PreciseTemperature = {celsius, 23.213}.
     {kelvin, T} = PreciseTemperature.
     -> ** exception error: no match of right hand side value {celsius,23.213}
 
-  a tuple which contains an atom with one element following it is called a `tagged tuple`.
+a tuple which contains an atom with one element following it is called a `tagged tuple`.
 
     {point, {X,Y}}.
 </details>
 <details>
-  <summary><strong>lists</strong></summary>
+  <summary><strong>lists</strong></summary><br>
 
-  lists can contain anything and you can mix more than one type of data in it.
+lists can contain anything and you can mix more than one type of data in it.
 
     [1, 2, 3, {numbers,[4,5,6]}, 5.34, atom].
 
-  strings are lists and the notation is absolutely the exact same
+strings are lists and the notation is absolutely the exact same
 
     [97, 98, 99].
     -> "abc"
 
-  erlang will print lists of numbers as numbers only when at least one of them could not also represent a letter
+erlang will print lists of numbers as numbers only when at least one of them could not also represent a letter
 
     [97,98,99,4,5,6].
     -> [97,98,99,4,5,6]
@@ -207,14 +207,14 @@ this is why you can compare anything with anything.
     [233].
     -> "é"
 
-  there is no such thing as a real string in erlang
+there is no such thing as a real string in erlang
 
-  glue lists together
+glue lists together
 
     [1,2,3] ++ [4,5].
     -> [1,2,3,4,5]
 
-  remove elements from a list
+remove elements from a list
 
     [1,2,3,4,5] -- [1,2,3].
     -> [4,5]
@@ -231,7 +231,7 @@ this is why you can compare anything with anything.
     [2,3,4,5] -- [3,5].
     -> [2,4]
 
-  both `++` and `--` are right-associative
+both `++` and `--` are right-associative
 
     [1,2,3] -- [1,2] -- [3].
     -> [3]
@@ -239,22 +239,22 @@ this is why you can compare anything with anything.
     [1,2,3] -- [1,2] -- [2].
     -> [2,3]
 
-  get length
+get length
 
     length([1,2,3,4]).
     -> 4
 
-  get head
+get head
 
     hd([1,2,3,4]).
     -> 1
 
-  get tail
+get tail
 
     tl([1,2,3,4]).
     -> [2,3,4]
 
-  or use pattern matching
+or use pattern matching
 
     [Head|Tail] = [1,2,3,4].
 
@@ -264,24 +264,24 @@ this is why you can compare anything with anything.
     Tail.
     -> [2,3,4]
 
-  add head
+add head
 
     List = [2,3,4].
     NewList = [1|List].
     -> [1,2,3,4]
 
-  `|` is named the `cons operator` (constructor),  any list can be built with only cons and values
+`|` is named the `cons operator` (constructor),  any list can be built with only cons and values
 
     [3 | [2 | [1 | []] ] ].
     -> [3,2,1]
 
-  note: using the form `[1 | 2]` gives what we call an `improper list`. improper lists will work when you pattern match in the `[Head|Tail]` manner, but will fail to be used with standard functions of erlang (even `length()`). this is because erlang expects `proper lists`. proper lists **end with an empty list** as their last cell. when declaring an item like `[2]`, the list is automatically formed in a proper manner. as such, `[1|[2]]` would work! improper lists, although syntactically valid, are of very limited use outside of user-defined data structures.
+note: using the form `[1 | 2]` gives what we call an `improper list`. improper lists will work when you pattern match in the `[Head|Tail]` manner, but will fail to be used with standard functions of erlang (even `length()`). this is because erlang expects `proper lists`. proper lists **end with an empty list** as their last cell. when declaring an item like `[2]`, the list is automatically formed in a proper manner. as such, `[1|[2]]` would work! improper lists, although syntactically valid, are of very limited use outside of user-defined data structures.
 
 </details>
 <details>
-  <summary><strong>list comprehensions</strong></summary>
+  <summary><strong>list comprehensions</strong></summary><br>
 
-  list comprehensions are ways to build or modify lists. it's based off the idea of set notation.
+list comprehensions are ways to build or modify lists. it's based off the idea of set notation.
 
     [2*N || N <- [1,2,3,4]].
     -> [2,4,6,8]
@@ -289,7 +289,7 @@ this is why you can compare anything with anything.
     [X || X <- [1,2,3,4,5,6,7,8,9,10], X rem 2 =:= 0].
     -> [2,4,6,8,10]
 
-  the `arrow` acts exactly like the `=` operator, with the exception that **it doesn't throw exceptions**.
+the `arrow` acts exactly like the `=` operator, with the exception that **it doesn't throw exceptions**.
 
     RestaurantMenu = [{steak, 5.99}, {beer, 3.99}, {poutine, 3.50}, {kitten, 20.99}, {water, 0.00}].
 
@@ -298,19 +298,19 @@ this is why you can compare anything with anything.
 
     -> [{steak,6.4}, {beer,4.3}, {poutine,3.7}]
 
-  recipe for list comprehensions in erlang is therefore; `NewList = [Expression || Pattern <- List, Condition1, Condition2, ... ConditionN]`. the part `Pattern <- List` is named a `generator expression`. you can have more than one.
+recipe for list comprehensions in erlang is therefore; `NewList = [Expression || Pattern <- List, Condition1, Condition2, ... ConditionN]`. the part `Pattern <- List` is named a `generator expression`. you can have more than one.
 
     [X+Y || X <- [1,2], Y <- [2,3]].
     -> [3,4,4,5]
 
-  permutation example
+permutation example
 
     [{X,Y,Z} || X <- [1,2,3], Y <- [1,2,3], Z <- [1,2,3], X =/= Y, Y =/= Z, X =/= Z].
     -> [{1,2,3}, {1,3,2}, {2,1,3}, {2,3,1}, {3,1,2}, {3,2,1}]
 
-  more generic recipe would be; `NewList = [Expression || GeneratorExp1, GeneratorExp2, ..., GeneratorExpN, Condition1, Condition2, ... ConditionM]`
+more generic recipe would be; `NewList = [Expression || GeneratorExp1, GeneratorExp2, ..., GeneratorExpN, Condition1, Condition2, ... ConditionM]`
 
-  expressions coupled with pattern matching also act as a filter:
+expressions coupled with pattern matching also act as a filter:
 
     Weather = [{toronto, rain}, {montreal, storms}, {london, fog},{paris, sun}, {boston, fog}, {vancouver, snow}].
 
@@ -319,9 +319,9 @@ this is why you can compare anything with anything.
     -> [london,boston]
 </details>
 <details>
-  <summary><strong>bit syntax</strong></summary>
+  <summary><strong>bit syntax</strong></summary><br>
 
-  bit syntax encloses binary data between `<<` and `>>`, splits it in readable segments, and each segment is separated by a comma. a segment is a sequence of bits of a binary (not necessarily on a byte boundary, although this is the default behaviour)
+bit syntax encloses binary data between `<<` and `>>`, splits it in readable segments, and each segment is separated by a comma. a segment is a sequence of bits of a binary (not necessarily on a byte boundary, although this is the default behaviour)
 
     Color = 16#F09A29.
     -> 15768105
@@ -329,7 +329,7 @@ this is why you can compare anything with anything.
     Pixel = <<Color:24>>.
     -> <<240,154,41>>
 
-  this basically says **put the binary values of `#F09A29` on `24 bits` of space (red on 8 bits, green on 8 bits and blue also on 8 bits) in the variable Pixel.**
+this basically says **put the binary values of `#F09A29` on `24 bits` of space (red on 8 bits, green on 8 bits and blue also on 8 bits) in the variable Pixel.**
 
     Pixels = <<213,45,132,64,76,32,76,0,0,234,32,15>>.
 
@@ -345,7 +345,7 @@ this is why you can compare anything with anything.
     R.
     -> 213
 
-  more than one way to describe a binary segment is accepted. those are all valid:
+more than one way to describe a binary segment is accepted. those are all valid:
 
 - `Value`
 - `Value:Size`
@@ -430,35 +430,91 @@ parsing TCP segments example:
     -> <<"this is a bit string!">>
 </details>
 <details>
-  <summary><strong>binary comprehensions</strong></summary>
+  <summary><strong>binary comprehensions</strong></summary><br>
 
-  binary comprehensions are to bit syntax what list comprehensions are to lists: a way to make code short and concise
+binary comprehensions are to bit syntax what list comprehensions are to lists: a way to make code short and concise
 
     [X || <<X>> <= <<1,2,3,4,5>>, X rem 2 == 0].
 
-  only change in syntax from regular list comprehensions is the `<-` which became `<=` and using `binaries` `<<>>` instead of `lists` `[]`
+only change in syntax from regular list comprehensions is the `<-` which became `<=` and using `binaries` `<<>>` instead of `lists` `[]`
 
     Pixels = <<213,45,132,64,76,32,76,0,0,234,32,15>>.
     RGB = [{R,G,B} || <<R:8,G:8,B:8>> <= Pixels].
     RGB.
     -> [{213,45,132},{64,76,32},{76,0,0},{234,32,15}]
 
-  changing `<-` to `<=` let us use a binary stream as a generator
+changing `<-` to `<=` let us use a binary stream as a generator
 
-  binary comprehension syntax to change non-binary data to binary data;
+binary comprehension syntax to change non-binary data to binary data;
 
     << <<R:8, G:8, B:8>> ||  {R,G,B} <- RGB >>.
 
-  it is possible to have a binary comprehension with a binary generator
+it is possible to have a binary comprehension with a binary generator
 
     << <<(X+1)/integer>> || <<X>> <= <<3,7,5,4,7>> >>.
+</details>
+<details>
+  <summary><strong>modules</strong></summary><br>
+
+- modules are a bunch of `functions` regrouped in a single file, under a single name.
+- all functions in erlang must be defined in modules.
+- modules need to be called in form of `Module:Function(Arguments)`
+- you can declare two kinds of things in a module: `functions` and `attributes`
+
+check [hello.erl](./hello.erl) for first module example
+
+## attributes
+
+all module attributes follow the form `-Name(Attribute).` <br>
+attributes are metadata describing the module itself such as its name, the functions that should be visible to the outside world, the author of the code, and so on.
+
+`-module(Name)` <br>
+necessary for your module to be compilable: name of the current module. this is the name you'll use to call functions from other modules. `Name` is an `atom`.
+
+`-export([Function1/Arity, Function2/Arity, ..., FunctionN/Arity]).` <br>
+defines what functions of a module can be called by the outside world.
+
+`-import(Module, [Function1/Arity, ..., FunctionN/Arity]).` <br>
+erlang programmers are often discouraged from using this attribute. leaving the module name in is considered good practice.
+
+- **the arity of a function is an integer representing how many arguments can be passed to the function.**
+- different functions defined within a module can share the same name if and only if they have a different arity.
+- the functions `add(X,Y)` and `add(X,Y,Z)` would thus be considered different and written in the form `add/2` and `add/3` respectively.
+
+## functions
+
+a function follows the form `Name(Args) -> Body.`<br>
+- `Name` has to be an `atom` and `Body` can be **one or more** erlang `expressions` separated by commas.
+- the function is ended with a period.
+- last logical expression of a function to be executed will have its value returned to the caller
+
+## macros
+
+a macro is defined as a module attribute of the form:`-define(MACRO, some_value).` <br>
+and is used as `?MACRO` inside any function defined in the module.
+
+a function macro example
+
+    % define
+    -define(sub(X,Y), X-Y).
+
+    % usage
+    ?sub(23,47).
+
+## comments
+comments are single-line only and begin with a `%` sign (using `%%` is purely a question of style.)
 </details>
 
 # Definitions
 <details>
-  <summary><strong>referential transparency</strong></summary>
+  <summary><strong>referential transparency</strong></summary><br>
 
-  an expression is called referentially transparent if it can be replaced with its corresponding value without changing the program's behavior. This requires that the expression be pure, that is to say the expression value must be the same for the same inputs and its evaluation must have no side effects. An expression that is not referentially transparent is called referentially opaque.
+an expression is called referentially transparent if it can be replaced with its corresponding value without changing the program's behavior. This requires that the expression be pure, that is to say the expression value must be the same for the same inputs and its evaluation must have no side effects. An expression that is not referentially transparent is called referentially opaque.
+</details>
+<details>
+  <summary><strong>arity</strong></summary><br>
+
+the arity of a function is an integer representing how many arguments can be passed to the function.
 </details>
 
 # Links
