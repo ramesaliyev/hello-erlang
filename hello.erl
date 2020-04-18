@@ -5,6 +5,7 @@
 -export([print_macroex/0]).
 
 -define(sub(X,Y), X-Y).
+-author("Sterling Archer").
 
 %% Shows greetings.
 %% io:format/1 is the standard function used to output text.

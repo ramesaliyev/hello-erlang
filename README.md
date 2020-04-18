@@ -477,6 +477,12 @@ defines what functions of a module can be called by the outside world.
 `-import(Module, [Function1/Arity, ..., FunctionN/Arity]).` <br>
 erlang programmers are often discouraged from using this attribute. leaving the module name in is considered good practice.
 
+`-vsn(VersionNumber).` <br>
+unique value differentiating each version of your code. this will be generated automatically if you dont specify. see the compiling topic.
+
+`-author("Sterling Archer").` <br>
+author info
+
 - **the arity of a function is an integer representing how many arguments can be passed to the function.**
 - different functions defined within a module can share the same name if and only if they have a different arity.
 - the functions `add(X,Y)` and `add(X,Y,Z)` would thus be considered different and written in the form `add/2` and `add/3` respectively.
@@ -487,6 +493,7 @@ a function follows the form `Name(Args) -> Body.`<br>
 - `Name` has to be an `atom` and `Body` can be **one or more** erlang `expressions` separated by commas.
 - the function is ended with a period.
 - last logical expression of a function to be executed will have its value returned to the caller
+- functions and expressions **must always return something**
 
 ## macros
 
@@ -503,6 +510,122 @@ a function macro example
 
 ## comments
 comments are single-line only and begin with a `%` sign (using `%%` is purely a question of style.)
+
+## module design
+- avoid circular dependencies!
+- it is usually considered a good practice to regroup functions that have similar roles close together
+
+</details>
+<details>
+  <summary><strong>compiling and using the code</strong></summary><br>
+
+erlang code is compiled to `bytecode` in order to be used by the `virtual machine`.
+- from command line: `erlc flags file.erl`
+- from shell or in module `compile:file(FileName)`
+- from shell `c(FileName)`
+
+## compiling code from shell
+
+`erl`
+
+    cd("/path/to/where/you/saved/the-module/").
+    -> ok
+
+    c(hello).
+    -> {ok,hello}
+
+    % or
+
+    compile:file(hello).
+    -> {ok,hello}
+
+    % compiling with some flags, see below for flags
+
+    c(hello, [debug_info, export_all]).
+    -> {ok,hello}
+
+    % or
+
+    compile:file(hello, [debug_info, export_all]).
+    -> {ok,hello}
+
+## usage
+
+after code is compiled, a `hello.beam` file will be added next to `hello.erl` in your directory. this is the compiled module.
+`.beam` stands for `Bogdan/Björn's Erlang Abstract Machine`, which is the VM itself.
+
+let's try our module:
+
+    hello:add(7,2).
+    -> 9
+
+    hello:hello().
+    -> Hello, world!
+    -> ok % io:format/1 returns 'ok' to denote a normal condition, the absence of errors.
+
+    hello:greet_and_add_two(7).
+    -> Hello, world!
+    -> 9
+
+    hello:print_macroex().
+    -> 7
+
+## compilation flags
+the most common flags are:
+
+`-debug_info`<br>
+erlang tools such as debuggers, code coverage and static analysis tools will use the debug information of a module in order to do their work.
+
+`-{outdir,Dir}`<br>
+by default, the erlang compiler will create the `beam` files in the current directory. this will let you choose where to put the compiled file.
+
+`-export_all`<br>
+will ignore the `-export` module attribute and will instead export all functions defined. useful for testing.
+
+`-{d,Macro}` or `{d,Macro,Value}`
+defines a macro to be used in the module, where `Macro` is an atom. more frequently used when dealing with `unit-testing`, ensuring that a module will only have its testing functions created and exported when they are explicitly wanted. by default, `Value` is `true` if it's not defined as the third element of the tuple.
+
+[list of all of them](http://erlang.org/doc/man/compile.html)
+
+compilation flags can be defined from within a module;
+
+    -compile([debug_info, export_all]).
+
+## compiling to native code
+
+native code compiling is not available for every platform and OS, but on those that support it, it can make your programs go faster (about 20% faster, based on anecdotal evidence). to compile to native code, you need to use the `hipe` module and call it the following way: `hipe:c(Module,OptionsList).` you could also use `c(Module,[native]).` when in the shell to achieve similar results. Note that the `.beam` file generated will contain both native and non-native code, and the native part will not be portable across platforms.
+
+## accesing metadata of a module
+compiler will pick up most module attributes and store them (along with other information) in a `module_info/0` function.
+
+    hello:module_info().
+    -> [{module,hello},
+        {exports,[
+          {hello,0},
+          {add,2},
+          {greet_and_add_two,1},
+          {print_macroex,0},
+          {module_info,0},
+          {module_info,1}]},
+        {attributes,[
+          {vsn,[77148074631179461122195354627063078466]},
+          {author,"Sterling Archer"}]},
+        {compile,[
+          {version,"7.5.4"},
+          {options,[debug_info,export_all]},
+          {source,"/Users/ramesaliyev/Projects/Personal/hello-erlang/hello.erl"}]},
+        {native,false},
+        {md5,<<58,10,45,191,213,113,184,164,243,212,168,133,38,26,222,66>>}
+      ]
+
+`module_info/1` will let you grab one specific piece of information.
+
+    hello:module_info(md5).
+    -> <<58,10,45,191,213,113,184,164,243,212,168,133,38,26,222,66>>
+
+`vsn` is an automatically generated `unique value differentiating` each version of your code, excluding comments. it is used in `code hot-loading` (upgrading an application while it runs, without stopping it) and by some tools related to release handling. You can also specify a vsn value yourself if you want: just add `-vsn(VersionNumber)` to your module.
+
+an [example usage of module attributes  in a testing script](https://learnyousomeerlang.com/static/erlang/tester.erl) to annotate functions for which unit tests could be better; the script looks up module attributes, finds the annotated functions and shows a warning about them.
 </details>
 
 # Definitions
@@ -516,6 +639,13 @@ an expression is called referentially transparent if it can be replaced with its
 
 the arity of a function is an integer representing how many arguments can be passed to the function.
 </details>
+<details>
+  <summary><strong>code hot-loading</strong></summary><br>
+
+upgrading an application while it runs, without stopping it
+</details>
+
+
 
 # Links
 - [Programming Rules and Conventions](http://www.erlang.se/doc/programming_rules.shtml)
