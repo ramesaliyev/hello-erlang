@@ -6,6 +6,12 @@ reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.c
 <details>
   <summary><strong>numbers</strong></summary><br>
 
+- erlang has no such thing as a `null` value
+- every function needs to return something
+</details>
+<details>
+  <summary><strong>numbers</strong></summary><br>
+
 both floating point numbers or integers are supported when dealing with arithmetic. Integers and floating values are pretty much the only types of data Erlang's mathematical operators will handle transparently for you. to have the integer-to-integer division, use `div`, and to have the modulo operator, use `rem`.
 
     5 / 2.
@@ -493,7 +499,7 @@ a function follows the form `Name(Args) -> Body.`<br>
 - `Name` has to be an `atom` and `Body` can be **one or more** erlang `expressions` separated by commas.
 - the function is ended with a period.
 - last logical expression of a function to be executed will have its value returned to the caller
-- functions and expressions **must always return something**
+- functions and expressions **must always return something**, if they wont, they will crash
 
 ## macros
 
@@ -626,6 +632,211 @@ compiler will pick up most module attributes and store them (along with other in
 `vsn` is an automatically generated `unique value differentiating` each version of your code, excluding comments. it is used in `code hot-loading` (upgrading an application while it runs, without stopping it) and by some tools related to release handling. You can also specify a vsn value yourself if you want: just add `-vsn(VersionNumber)` to your module.
 
 an [example usage of module attributes  in a testing script](https://learnyousomeerlang.com/static/erlang/tester.erl) to annotate functions for which unit tests could be better; the script looks up module attributes, finds the annotated functions and shows a warning about them.
+</details>
+<details>
+  <summary><strong>io:format</strong></summary><br>
+- `io:format`'s formatting is done with the help of tokens being replaced in a string
+- the character used to denote a token is the tilde (`~`)
+- some tokens are built-in such as `~n`, which will be changed to a `line-break`
+- `~s` accepts strings and bitstrings as arguments
+- `~p` will print an erlang term with indentation etc in a nice way
+
+    io:format("~s!~n",["Hello"]).
+    -> "Hello!\n"
+    -> ok
+
+    io:format("~p~n",[<<"Hello">>]).
+    -> <<"Hello">>
+    -> ok
+
+    io:format("~~~n").
+    -> ~
+    -> ok
+
+    io:format("~f~n", [4.0]).
+    -> 4.000000
+    -> ok
+
+    io:format("~30f~n", [4.0]).
+    ->                      4.000000
+    -> ok
+
+[more about io:format](http://erlang.org/doc/man/io.html#format-3)
+</details>
+<details>
+  <summary><strong>syntax in functions: pattern matching</strong></summary><br>
+
+  pattern matching cannot express things like a range of value or certain types of data. we're gonna use guards for that. pattern matching good for specifying really precise values or abstract values.
+
+> **see [pattern.erl](./pattern.erl)**
+
+    pattern:greet(male, "Sterling").
+    -> Hello, Mr. Sterling!
+    -> ok
+
+    pattern:greet(female, "Lana").
+    -> Hello, Mrs. Lana!
+    -> ok
+
+    pattern:greet(unknown, "Ray").
+    -> Hello, Ray!
+    -> ok
+
+each of these function declarations is called a `function clause`. function clauses must be separated by semicolons (`;`) and together form a `function declaration`. a function declaration counts as one larger statement, and it's why the final function clause ends with a period.
+
+`head/1`, `second/1`;
+
+    -> pattern:head([1,2,3,4]).
+    -> 1
+
+    -> pattern:second([1,2,3,4]).
+    -> 2
+
+`same/2`
+
+    pattern:same(1,1).
+    -> true
+
+    pattern:same(1,4).
+    -> false
+
+    pattern:same(cat,dog).
+    -> false
+
+    pattern:same(cat,cat).
+    -> true
+
+when you call `same(a,a)` is that the first `X` is seen as **unbound**: it automatically takes the value `a`. then when Erlang goes over to the `second argument`, it sees `X` is **already bound**. it then compares it to the `a` passed as the second argument and looks to see if it matches. **the pattern matching succeeds and the function returns true**. if the two values aren't the same, this will fail and go to the second function clause, which doesn't care about its arguments and will instead return **false**.
+
+`valid_time/1`
+
+it is possible to use the `=` operator in the function head, allowing us to match both the content inside a tuple (`{Y,M,D}`) and the tuple as a whole (`Date`)
+
+    pattern:valid_time({{2011,09,06}, {09,04,43}}).
+    -> The Date tuple ({2011,9,6}) says today is: 2011/9/6,
+    -> The time tuple ({9,4,43}) indicates: 9:4:43.
+    -> ok
+
+    pattern:valid_time({{2011,09,06},{09,04}}).
+    -> Stop feeding me wrong data!
+    -> ok
+
+there is a problem though! this function could take anything for values, even text or atoms, as long as the tuples are of the form `{{A,B,C}, {D,E,F}}`. this denotes **one of the limits of pattern matching: it can either specify really precise values** such as a known number of atom, **or abstract values** such as the head|tail of a list, a tuple of N elements, or anything (`_` and unbound variables), etc. **to solve this problem, we use guards.**
+
+## bound and unbound variables
+
+**unbound** variables are variables without any values attached to them. binding a variable is simply attaching a value to an unbound variable. in the case of erlang, **when you want to assign a value to a variable that is already bound, an error occurs unless the new value is the same as the old one**.
+</details>
+<details>
+  <summary><strong>syntax in functions: guards</strong></summary><br>
+
+guards are additional clauses that can go in a function's head to make pattern matching more expressive. can express a range of value or certain types of data.
+
+> **see [guards.erl](./guards.erl)**
+
+    guards:old_enough(15).
+    -> false
+
+    guards:old_enough(17).
+    -> true
+
+    guards:right_age(17).
+    -> true
+
+    guards:right_age(106).
+    -> false
+
+    guards:wrong_age(17).
+    -> false
+
+    guards:wrong_age(106).
+    -> true
+
+basic rule for guard expression is they must **return `true`** to succeed. will fail if it **`returns false`** or if it **`throws an exception`**.
+
+in guards, the comma (`,`) acts in a similar manner to the operator `andalso` and the semicolon (`;`) acts a bit like `orelse`. but they're not exactly the same. The comma and semicolon pair will catch exceptions as they happen while the `andalso` and `orelse` won't. what this means is that if there is an error thrown in the first part of the guard `X >= N; N >= 0`, the second part can still be evaluated and the guard might succeed; if an error was thrown in the first part of `X >= N orelse N >= 0`, the second part will also be skipped and the whole guard will fail. if the first guard fails, it then tries the
+second, and then the next one, until either one guard succeeds or they all fail.
+
+only `andalso` and `orelse` can be nested inside guards. this means `(A orelse B) andalso C` is a valid guard, while `(A; B), C` is not. given their different use, the best strategy is often to mix them as necessary.
+
+    guards:is_okay(true, false, false).
+    -> false
+
+    guards:is_okay(false, false, true).
+    -> false
+
+    guards:is_okay(false, true, true).
+    -> true
+
+math operations and functions about data types, such as `is_integer/1`, `is_atom/1`, etc. can be used inside guard expressions.
+    guards:is_square(3, 9).
+    -> true
+
+    guards:is_square(3, 93).
+    -> false
+
+but guard expressions **will not accept user-defined functions** because of side effects. erlang is not a purely functional programming language (like `Haskell` is) because it relies on side effects a lot: you can do I/O, send messages between actors or throw errors as you want and when you want. there is no trivial way to determine if a function you would use in a guard would or wouldn't print text or catch important errors every time it is tested over many function clauses. so instead, erlang just doesn't trust you.
+
+when erlang can't find a way to have a guard succeed, it will crash: it **cannot not return something.**
+</details>
+<details>
+  <summary><strong>syntax in functions: if</strong></summary><br>
+
+`if`s act like guards and share guards' syntax, but outside of a function clause's head. the if clauses are called `Guard Patterns`.
+
+> **see [ifs.erl](./ifs.erl)**
+
+when erlang can't find a way to have a guard succeed, it will crash: it **cannot not return something.** because of that we need to add a catch-all branch that will always succeed no matter what. in most languages, this would be called an `else`. in Erlang, we use `true`
+
+    ifs:is_two(1).
+    -> no
+
+    ifs:is_two(2).
+    -> yes
+
+    ifs:print_me(male, 30, "Sterling").
+    -> Hello Sterling! You are a boy! You are NOT a teenager!ok
+
+    ifs:print_me(female, 17, "Lana").
+    -> Hello Lana! You are a girl! You are a teenager!ok
+
+    ifs:animal_says(dog).
+    -> {dog,"says bark!"}
+
+    ifs:animal_says(beef).
+    -> {beef,"says mooo!"}
+
+    ifs:animal_says(zombie).
+    -> {zombie,"says idunnowhattosay!"}
+
+    ifs:animal_says("zombie").
+    -> {"zombie","says idunnowhattosay!"}
+</details>
+<details>
+  <summary><strong>syntax in functions: case ... of</strong></summary><br>
+
+if the `if` expression is like a `guard`, a `case ... of` expression is like the whole function head: you can have the complex pattern matching you can use with each argument, and you can have guards on top of it!
+
+> **see [cases.erl](./cases.erl)**
+
+    cases:insert(archer, []).
+    -> [archer]
+
+    cases:insert(bender, [archer]).
+    -> [bender, archer]
+
+    cases:insert(bender, [archer, bender]).
+    -> [archer, bender]
+
+</details>
+<details>
+  <summary><strong>syntax in functions: which to use</strong></summary><br>
+
+even the writer of the book not sure what to say about `function heads` vs `case ... ofs`. and the community is not agreed either.
+
+`if` was added to the language as a short way to have guards without needing to write the whole pattern matching part when it wasn't needed.
+
+all of this is more about personal preferences and what you may encounter more often. there is no good solid answer.
 </details>
 
 # Definitions
