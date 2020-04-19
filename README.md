@@ -3,13 +3,15 @@ These are notes and quotes i take about Erlang while<br>
 reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.com/) book.
 
 # Topics
-## basics
 <details>
   <summary><strong>gotchas</strong></summary><br>
 
 - erlang has no such thing as a `null` value
 - every function needs to return something
+- erlang is built on the notion that a failure in one of the components should not affect the whole system
 </details>
+
+## basic data types
 <details>
   <summary><strong>numbers</strong></summary><br>
 
@@ -470,7 +472,7 @@ it is possible to have a binary comprehension with a binary generator
 - modules need to be called in form of `Module:Function(Arguments)`
 - you can declare two kinds of things in a module: `functions` and `attributes`
 
-check [hello.erl](./hello.erl) for first module example
+check [hello.erl](./code/hello.erl) for first module example
 
 ## attributes
 
@@ -532,6 +534,7 @@ erlang code is compiled to `bytecode` in order to be used by the `virtual machin
 - from command line: `erlc flags file.erl`
 - from shell or in module `compile:file(FileName)`
 - from shell `c(FileName)`
+  - c("code/function_syntax/pattern").
 
 ## compiling code from shell
 
@@ -622,7 +625,7 @@ compiler will pick up most module attributes and store them (along with other in
         {compile,[
           {version,"7.5.4"},
           {options,[debug_info,export_all]},
-          {source,"/Users/ramesaliyev/Projects/Personal/hello-erlang/hello.erl"}]},
+          {source,"/Users/ramesaliyev/Projects/Personal/hello-erlang/code/hello.erl"}]},
         {native,false},
         {md5,<<58,10,45,191,213,113,184,164,243,212,168,133,38,26,222,66>>}
       ]
@@ -673,7 +676,9 @@ an [example usage of module attributes  in a testing script](https://learnyousom
 
   pattern matching cannot express things like a range of value or certain types of data. we're gonna use guards for that. pattern matching good for specifying really precise values or abstract values.
 
-> **see [pattern.erl](./pattern.erl)**
+  when pattern matching, the code we had written didn't have to know what it would be matched against. The tuple `{X,Y}` could be matched with `{atom, 123}` as well as `{"A string", <<"binary stuff!">>}, {2.0, ["strings","and",atoms]}` or really anything at all.
+
+> **see [pattern.erl](./code/function_syntax/pattern.erl)**
 
     pattern:greet(male, "Sterling").
     -> Hello, Mr. Sterling!
@@ -737,7 +742,7 @@ there is a problem though! this function could take anything for values, even te
 
 guards are additional clauses that can go in a function's head to make pattern matching more expressive. can express a range of value or certain types of data.
 
-> **see [guards.erl](./guards.erl)**
+> **see [guards.erl](./code/function_syntax/guards.erl)**
 
     guards:old_enough(15).
     -> false
@@ -774,11 +779,24 @@ only `andalso` and `orelse` can be nested inside guards. this means `(A orelse B
     -> true
 
 math operations and functions about data types, such as `is_integer/1`, `is_atom/1`, etc. can be used inside guard expressions.
+
     guards:is_square(3, 9).
     -> true
 
     guards:is_square(3, 93).
     -> false
+
+    guards:is_between(17, 9, 31).
+    -> true
+
+    guards:is_between("Hello", 9, 31).
+    -> false
+
+**list of available functions;**
+
+type checking functions: `is_atom/1`, `is_binary/1`, `is_bitstring/1`, `is_boolean/1`, `is_builtin/3`, `is_float/1`, `is_function/1`, `is_function/2`, `is_integer/1`, `is_list/1`, `is_number/1`, `is_pid/1`, `is_port/1`, `is_record/2`, `is_record/3`, `is_reference/1`, `is_tuple/1`
+
+other allowed functions: `abs(Number)`, `bit_size(Bitstring)`, `byte_size(Bitstring)`, `element(N`, `Tuple)`, `float(Term)`, `hd(List)`, `length(List)`, `node()`, `node(Pid|Ref|Port)`, `round(Number)`, `self()`, `size(Tuple|Bitstring)`, `tl(List)`, `trunc(Number)`, `tuple_size(Tuple)`
 
 but guard expressions **will not accept user-defined functions** because of side effects. erlang is not a purely functional programming language (like `Haskell` is) because it relies on side effects a lot: you can do I/O, send messages between actors or throw errors as you want and when you want. there is no trivial way to determine if a function you would use in a guard would or wouldn't print text or catch important errors every time it is tested over many function clauses. so instead, erlang just doesn't trust you.
 
@@ -789,7 +807,7 @@ when erlang can't find a way to have a guard succeed, it will crash: it **cannot
 
 `if`s act like guards and share guards' syntax, but outside of a function clause's head. the if clauses are called `Guard Patterns`.
 
-> **see [ifs.erl](./ifs.erl)**
+> **see [ifs.erl](./code/function_syntax/ifs.erl)**
 
 when erlang can't find a way to have a guard succeed, it will crash: it **cannot not return something.** because of that we need to add a catch-all branch that will always succeed no matter what. in most languages, this would be called an `else`. in Erlang, we use `true`
 
@@ -822,7 +840,7 @@ when erlang can't find a way to have a guard succeed, it will crash: it **cannot
 
 if the `if` expression is like a `guard`, a `case ... of` expression is like the whole function head: you can have the complex pattern matching you can use with each argument, and you can have guards on top of it!
 
-> **see [cases.erl](./cases.erl)**
+> **see [cases.erl](./code/function_syntax/cases.erl)**
 
     cases:insert(archer, []).
     -> [archer]
@@ -844,6 +862,50 @@ even the writer of the book not sure what to say about `function heads` vs `case
 all of this is more about personal preferences and what you may encounter more often. there is no good solid answer.
 </details>
 
+## types
+<details>
+  <summary><strong>dynamically and strongly typed</strong></summary><br>
+
+**erlang is dynamically typed**: every error is caught at **runtime** and the compiler won't always yell at you when compiling modules where things may result in failure.
+
+**erlang is also strongly typed**: it wont do implicit type conversions between terms.
+</details>
+<details>
+  <summary><strong>type conversions</strong></summary><br>
+
+each of casting functions take the form `<type>_to_<type>` and are implemented in the `erlang` module.
+
+    erlang:list_to_integer("54").
+    -> 54
+
+    erlang:integer_to_list(54).
+    -> "54"
+
+    erlang:list_to_float("54.32").
+    -> 54.32
+
+    erlang:atom_to_list(true).
+    -> "true"
+
+    erlang:list_to_atom("true").
+    -> true
+
+    erlang:list_to_bitstring("hi there").
+    -> <<"hi there">>
+
+    erlang:bitstring_to_list(<<"hi there">>).
+    -> "hi there"
+
+whole list:
+
+`atom_to_binary/2`, `atom_to_list/1`, `binary_to_atom/2`, `binary_to_existing_atom/2`, `binary_to_list/1`, `bitstring_to_list/1`, `binary_to_term/1`, `binary_to_term/2`, `float_to_list/1`, `fun_to_list/1`, `integer_to_list/1`, `integer_to_list/2`, `iolist_to_binary/1`, `iolist_to_atom/1`, `list_to_atom/1`, `list_to_binary/1`, `list_to_bitstring/1`, `list_to_existing_atom/1`, `list_to_float/1`, `list_to_integer/2`, `list_to_pid/1`, `list_to_tuple/1`, `pid_to_list/1`, `port_to_list/1`, `ref_to_list/1`, `term_to_binary/1`, `term_to_binary/2` and `tuple_to_list/1`
+</details>
+<details>
+  <summary><strong>type checking</strong></summary><br>
+
+`is_atom/1`, `is_binary/1`, `is_bitstring/1`, `is_boolean/1`, `is_builtin/3`, `is_float/1`, `is_function/1`, `is_function/2`, `is_integer/1`, `is_list/1`, `is_number/1`, `is_pid/1`, `is_port/1`, `is_record/2`, `is_record/3`, `is_reference/1`, `is_tuple/1`
+</details>
+
 # Definitions
 <details>
   <summary><strong>referential transparency</strong></summary><br>
@@ -861,9 +923,56 @@ the arity of a function is an integer representing how many arguments can be pas
 upgrading an application while it runs, without stopping it
 </details>
 
+<details>
+  <summary><strong>hard, firm, and soft real-time</strong></summary><br>
 
+## hard real-time
+hard real-time definition considers any missed deadline to be a system failure. This scheduling is used extensively in mission critical systems where failure to conform to timing constraints results in a loss of life or property.
+
+**Examples:**
+- Air France Flight 447 crashed into the ocean after a sensor malfunction caused a series of system errors. The pilots stalled the aircraft while responding to outdated instrument readings. All 12 crew and 216 passengers were killed.
+- Mars Pathfinder spacecraft was nearly lost when a priority inversion caused system restarts. A higher priority task was not completed on time due to being blocked by a lower priority task. The problem was corrected and the spacecraft landed successfully.
+- An Inkjet printer has a print head with control software for depositing the correct amount of ink onto a specific part of the paper. If a deadline is missed then the print job is ruined.
+
+## firm real-time
+firm real-time definition allows for infrequently missed deadlines. In these applications the system can survive task failures so long as they are adequately spaced, however the value of the task's completion drops to zero or becomes impossible.
+
+**Examples:**
+- Manufacturing systems with robot assembly lines where missing a deadline results in improperly assembling a part. As long as ruined parts are infrequent enough to be caught by quality control and not too costly, then production continues.
+- A digital cable set-top box decodes time stamps for when frames must appear on the screen. Since the frames are time order sensitive a missed deadline causes jitter, diminishing quality of service. If the missed frame later becomes available it will only cause more jitter to display it, so it's useless. The viewer can still enjoy the program if jitter doesn't occur too often.
+
+## soft real-time
+soft real-time definition allows for frequently missed deadlines, and as long as tasks are timely executed their results continue to have value. Completed tasks may have increasing value up to the deadline and decreasing value past it.
+
+**Examples:**
+- Weather stations have many sensors for reading temperature, humidity, wind speed, etc. The readings should be taken and transmitted at regular intervals, however the sensors are not synchronized. Even though a sensor reading may be early or late compared with the others it can still be relevant as long as it is close enough.
+- A video game console runs software for a game engine. There are many resources that must be shared between its tasks. At the same time tasks need to be completed according to the schedule for the game to play correctly. As long as tasks are being completely relatively on time the game will be enjoyable, and if not it may only lag a little.
+
+[resource](https://stackoverflow.com/a/30498130)
+</details>
+
+<details>
+  <summary><strong>statically/dynamically strongly/weakly typed</strong></summary><br>
+
+*there is no universally accepted definition of what these terms mean*
+
+**Static/Dynamic Typing is about when type information is acquired**
+- a language is statically-typed if the type of a variable is known at compile-time instead of at run-time.
+- a language is dynamically-typed if the type of a variable is checked during run-time.
+
+**Strong/Weak Typing is about how strictly types are distinguished** whether the language tries to do an implicit conversion from strings to numbers.
+- a strongly-typed language is one in which variables are bound to specific data types, and will result in type errors if types do not match up as expected in the expression — regardless of when type checking occurs.
+- a weakly-typed language on the other hand is a language in which variables are not bound to a specific data type; they still have a type, but type safety constraints are lower compared to strongly-typed languages.
+
+![languages by type system chart](./assets/type_dynamic_static_strong_weak.png)
+[resource](https://android.jlelse.eu/magic-lies-here-statically-typed-vs-dynamically-typed-languages-d151c7f95e2b)
+</details>
+
+# Tutorials / Presentations
+- [Parque - Designing a Real Time Game Engine in Erlang](https://www.youtube.com/watch?v=sla-t0ZNlMU), [[source code](https://github.com/mrallen1/parque)]
 
 # Links
+- [Erlang Resources](https://gist.github.com/macintux/6349828)
 - [Programming Rules and Conventions](http://www.erlang.se/doc/programming_rules.shtml)
 - [Why did Alan Kay dislike Java](https://www.quora.com/Why-did-Alan-Kay-dislike-Java)
 

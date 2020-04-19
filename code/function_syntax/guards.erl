@@ -20,3 +20,10 @@ is_square(_,_) -> false.
 % A or B has to be true, and C has to be true
 is_okay(A, B, C) when (A orelse B) andalso C -> true;
 is_okay(_, _, _) -> false.
+
+is_between(N, A, B)
+  when
+    is_integer(N), is_integer(A), is_integer(B),
+    N >= A, N =< B
+  -> true;
+is_between(_, _, _) -> false.
