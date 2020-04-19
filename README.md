@@ -3,8 +3,9 @@ These are notes and quotes i take about Erlang while<br>
 reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.com/) book.
 
 # Topics
+## basics
 <details>
-  <summary><strong>numbers</strong></summary><br>
+  <summary><strong>gotchas</strong></summary><br>
 
 - erlang has no such thing as a `null` value
 - every function needs to return something
@@ -459,6 +460,8 @@ it is possible to have a binary comprehension with a binary generator
 
     << <<(X+1)/integer>> || <<X>> <= <<3,7,5,4,7>> >>.
 </details>
+
+## modules
 <details>
   <summary><strong>modules</strong></summary><br>
 
@@ -663,8 +666,10 @@ an [example usage of module attributes  in a testing script](https://learnyousom
 
 [more about io:format](http://erlang.org/doc/man/io.html#format-3)
 </details>
+
+## syntax in functions
 <details>
-  <summary><strong>syntax in functions: pattern matching</strong></summary><br>
+  <summary><strong>pattern matching</strong></summary><br>
 
   pattern matching cannot express things like a range of value or certain types of data. we're gonna use guards for that. pattern matching good for specifying really precise values or abstract values.
 
@@ -728,7 +733,7 @@ there is a problem though! this function could take anything for values, even te
 **unbound** variables are variables without any values attached to them. binding a variable is simply attaching a value to an unbound variable. in the case of erlang, **when you want to assign a value to a variable that is already bound, an error occurs unless the new value is the same as the old one**.
 </details>
 <details>
-  <summary><strong>syntax in functions: guards</strong></summary><br>
+  <summary><strong>guards</strong></summary><br>
 
 guards are additional clauses that can go in a function's head to make pattern matching more expressive. can express a range of value or certain types of data.
 
@@ -780,7 +785,7 @@ but guard expressions **will not accept user-defined functions** because of side
 when erlang can't find a way to have a guard succeed, it will crash: it **cannot not return something.**
 </details>
 <details>
-  <summary><strong>syntax in functions: if</strong></summary><br>
+  <summary><strong>if</strong></summary><br>
 
 `if`s act like guards and share guards' syntax, but outside of a function clause's head. the if clauses are called `Guard Patterns`.
 
@@ -813,7 +818,7 @@ when erlang can't find a way to have a guard succeed, it will crash: it **cannot
     -> {"zombie","says idunnowhattosay!"}
 </details>
 <details>
-  <summary><strong>syntax in functions: case ... of</strong></summary><br>
+  <summary><strong>case ... of</strong></summary><br>
 
 if the `if` expression is like a `guard`, a `case ... of` expression is like the whole function head: you can have the complex pattern matching you can use with each argument, and you can have guards on top of it!
 
@@ -830,7 +835,7 @@ if the `if` expression is like a `guard`, a `case ... of` expression is like the
 
 </details>
 <details>
-  <summary><strong>syntax in functions: which to use</strong></summary><br>
+  <summary><strong>which to use</strong></summary><br>
 
 even the writer of the book not sure what to say about `function heads` vs `case ... ofs`. and the community is not agreed either.
 
