@@ -8,6 +8,7 @@ reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.c
 
 - erlang has no such thing as a `null` value
 - every function needs to return something
+- erlang doesn't allow default arguments in functions
 - erlang is built on the notion that a failure in one of the components should not affect the whole system
 </details>
 
@@ -906,6 +907,82 @@ whole list:
 `is_atom/1`, `is_binary/1`, `is_bitstring/1`, `is_boolean/1`, `is_builtin/3`, `is_float/1`, `is_function/1`, `is_function/2`, `is_integer/1`, `is_list/1`, `is_number/1`, `is_pid/1`, `is_port/1`, `is_record/2`, `is_record/3`, `is_reference/1`, `is_tuple/1`
 </details>
 
+## recursion
+<details>
+  <summary><strong>recursion</strong></summary><br>
+
+> **see [recursive.erl](./code/recursion/recursive.erl)**
+
+    recursive:fac(3).
+    -> 6
+
+    recursive:len([]).
+    -> 0
+
+    recursive:len([1,2,3]).
+    -> 3
+
+    recursive:duplicate(3, x).
+    -> [x,x,x]
+
+    recursive:reverse([1,2,3]).
+    -> [3,2,1]
+
+    recursive:sublist([a,b,c,d], 2).
+    -> [a,b]
+
+    recursive:zip([a,b,c], [1,2,3]).
+    -> [{a,1},{b,2},{c,3}]
+
+    recursive:zip([a,b,c,d], [1,2,3]).
+    -> ** exception error: no function clause matching
+
+    recursive:lenient_zip([a,b,c,d], [1,2,3]).
+    -> [{a,1},{b,2},{c,3}]
+
+> for more advanced examples also see
+> - [quicksort.erl](./code/examples/quicksort.erl)
+> - [tree.erl](./code/examples/tree.erl)
+
+</details>
+<details>
+  <summary><strong>tail recursion</strong></summary><br>
+
+**see [recursive.erl](./code/recursion/recursive.erl)**
+
+tail recursion is a way to transform the linear process (it grows as much as there are call stacks) to an iterative one (there is not really any growth). to have a function call being tail recursive, it needs to be *alone*.
+
+check *tail_* prefixed functions to see how.
+
+tail recursion as seen here is not making the memory grow because when the virtual machine sees a function calling itself in a tail position (the last expression to be evaluated in a function), it eliminates the current stack frame. This is called `tail-call optimisation` (`TCO`) and it is a special case of a more general optimisation named `Last Call Optimisation` (`LCO`).
+
+`LCO` is done whenever the last expression to be evaluated in a function body is another function call. when that happens, as with `TCO`, the Erlang VM avoids storing the stack frame. as such tail recursion is also possible between multiple functions. As an example, the chain of functions `a() -> b(). b() -> c(). c() -> a().` will effectively create an infinite loop that won't go out of memory as `LCO` avoids overflowing the stack. this principle, combined with our use of accumulators is what makes tail recursion useful.
+
+the areas which tail recursion is become more important are in functions that are supposed to loop infinitely, like main loops.
+
+    recursive:tail_fac(3).
+    -> 6
+
+    recursive:tail_len([1,2,3,4]).
+    -> 4
+
+    recursive:tail_duplicate(3, x).
+    -> [x,x,x]
+
+    recursive:tail_reverse([a,b,c]).
+    -> [c,b,a]
+
+    recursive:tail_sublist([a,b,c,d], 2).
+    -> [a,b]
+
+    recursive:tail_zip([a,b,c], [1,2,3]).
+    -> [{a,1},{b,2},{c,3}]
+
+    recursive:tail_lenient_zip([a,b,c,d], [1,2,3]).
+    -> [{a,1},{b,2},{c,3}]
+
+</details>
+
 # Definitions
 <details>
   <summary><strong>referential transparency</strong></summary><br>
@@ -967,11 +1044,22 @@ soft real-time definition allows for frequently missed deadlines, and as long as
 ![languages by type system chart](./assets/type_dynamic_static_strong_weak.png)
 [resource](https://android.jlelse.eu/magic-lies-here-statically-typed-vs-dynamically-typed-languages-d151c7f95e2b)
 </details>
+<details>
+  <summary><strong>recursions and recursive functions</strong></summary><br>
+
+`recursion` is a way of programming or coding a problem, in which a function calls itself one or more times in its body. usually, it is returning the return value of this function call. if a function definition fulfils the condition of recursion, we call this function a `recursive` function.
+
+**termination/stopping condition**:
+a recursive function has to terminate to be used in a program. a recursive function terminates, if with every recursive call the solution of the problem is downsized and moves towards a `base case`. a base case is a case, where the problem can be solved without further recursion. a recursion can lead to an infinite loop, if the base case is not met in the calls.
+
+[resource](https://www.python-course.eu/recursive_functions.php)
+</details>
 
 # Tutorials / Presentations
 - [Parque - Designing a Real Time Game Engine in Erlang](https://www.youtube.com/watch?v=sla-t0ZNlMU), [[source code](https://github.com/mrallen1/parque)]
 
 # Links
+- [Official Docs](http://erlang.org/doc/index.html)
 - [Erlang Resources](https://gist.github.com/macintux/6349828)
 - [Programming Rules and Conventions](http://www.erlang.se/doc/programming_rules.shtml)
 - [Why did Alan Kay dislike Java](https://www.quora.com/Why-did-Alan-Kay-dislike-Java)
