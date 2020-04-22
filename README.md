@@ -2,6 +2,8 @@
 These are notes and quotes i take about Erlang while<br>
 reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.com/) book.
 
+***
+
 # Topics
 <details>
   <summary><strong>gotchas</strong></summary><br>
@@ -948,7 +950,7 @@ whole list:
 <details>
   <summary><strong>tail recursion</strong></summary><br>
 
-**see [recursive.erl](./code/recursion/recursive.erl)**
+> **see [recursive.erl](./code/recursion/recursive.erl)**
 
 tail recursion is a way to transform the linear process (it grows as much as there are call stacks) to an iterative one (there is not really any growth). to have a function call being tail recursive, it needs to be *alone*.
 
@@ -982,6 +984,202 @@ the areas which tail recursion is become more important are in functions that ar
     -> [{a,1},{b,2},{c,3}]
 
 </details>
+
+## higher order functions
+<details>
+  <summary><strong>higher order functions</strong></summary><br>
+
+function that can accept other functions transported around is named a higher order function.
+
+> **see [hof.erl](./code/higher_order_fns/hof.erl)**
+
+    hof:add(fun hof:one/0, fun hof:two/0).
+
+`fun Module:Function/Arity` tells the VM to use that specific function, and then bind it to a variable.
+
+if function names are written without a parameter list then those names are interpreted as atoms, and atoms can not be functions, so the call fails.
+
+    hof:map(fun hof:incr/1, [1,2,3,4,5]).
+    -> [2,3,4,5,6]
+
+    hof:map(fun hof:decr/1, [1,2,3,4,5]).
+    -> [0,1,2,3,4]
+
+</details>
+<details>
+  <summary><strong>anonymous functions</strong></summary><br>
+
+anonymous functions, or `fun`s, letting you declare a special kind of function inline, without naming it. they can do pretty much everything normal functions can do, except calling themselves recursively.
+
+    fun(Args1) ->
+      Expression1, Exp2, ..., ExpN;
+    (Args2) ->
+      Expression1, Exp2, ..., ExpN;
+    (Args3) ->
+      Expression1, Exp2, ..., ExpN
+    end
+
+example
+
+    Fn = fun() -> a end.
+    -> #Fun<erl_eval.21.126501267>
+    Fn().
+    -> a
+
+> **see [hof.erl](./code/higher_order_fns/hof.erl)**
+
+    hof:map(fun(N) -> N*5 end, [1,2,3,4,5]).
+    -> [5,10,15,20,25]
+
+## closures
+
+    PrepareAlarm =
+      fun(Room) -> io:format("Alarm set in ~s.~n",[Room]),
+        fun() -> io:format("Alarm tripped in ~s! Call Batman!~n",[Room]) end
+      end.
+
+    -> #Fun<erl_eval.20.67289768>
+
+    AlarmReady = PrepareAlarm("bathroom").
+    -> Alarm set in bathroom.
+    -> #Fun<erl_eval.6.13229925>
+
+    AlarmReady().
+    -> Alarm tripped in bathroom! Call Batman!
+    -> ok
+
+> **see [anonymous.erl](./code/higher_order_fns/anonymous.erl)**
+
+    anonymous:b(anonymous:a()).
+    -> "a/0's password is pony"
+
+    Base = 2.
+    PowerOfBase = fun(X) -> math:pow(Base,X) end.
+    hof:map(PowerOfBase, [1,2,3,4,5]).
+    -> [2.0, 4.0, 8.0, 16.0, 32.0]
+
+</details>
+<details>
+  <summary><strong>anonymous but named functions</strong></summary><br>
+
+the language supports using anonymous functions with an internal name. the trick is that the name is visible only within the function's scope, not outside of it. main advantage of this is that it makes it possible to define anonymous recursive functions.
+
+    PrepareAlarm = fun(Room) ->
+      io:format("Alarm set in ~s.~n",[Room]),
+      fun Loop() ->
+        io:format("Alarm tripped in ~s! Call Batman!~n",[Room]),
+        timer:sleep(500),
+        Loop()
+      end
+    end.
+    -> #Fun<erl_eval.7.126501267>
+
+    AlarmReady = PrepareAlarm("bathroom").
+    -> Alarm set in bathroom.
+    -> #Fun<erl_eval.45.126501267>
+
+    AlarmReady().
+    -> Alarm tripped in bathroom! Call Batman!
+    -> Alarm tripped in bathroom! Call Batman!
+    -> Alarm tripped in bathroom! Call Batman!
+    -> ...
+
+</details>
+<details>
+  <summary><strong>maps, filters, folds and more</strong></summary><br>
+
+> **see [fold.erl](./code/higher_order_fns/fold.erl)**
+
+    % MAP
+
+    fold:map(fun(N) -> N/2 end, [2,4,6,8,10]).
+    -> [1.0,2.0,3.0,4.0,5.0]
+
+    % FILTER
+
+    fold:even([1,2,3,4,5]).
+    -> [2,4]
+
+    fold:old_men([{male, 80}, {male, 30}, {female, 65}, {male, 70}]).
+    -> [{male,80},{male,70}]
+
+    Numbers = lists:seq(1,10).
+    -> [1,2,3,4,5,6,7,8,9,10]
+    fold:filter(fun(X) -> X rem 2 == 0 end, Numbers).
+    -> [2,4,6,8,10]
+
+    People = [{male,45},{female,67},{male,66},{female,12},{unknown,174},{male,74}].
+    fold:filter(fun({Gender,Age}) -> Gender == male andalso Age > 60 end, People).
+    -> [{male,66},{male,74}]
+
+    % FOLD
+
+    fold:max([5,6,3,1,9,2]).
+    -> 9
+
+    fold:min([5,6,3,1,9,2]).
+    -> 1
+
+    fold:sum([1,2,3,4,5]).
+    -> 15
+
+    % any function you can think of that reduces lists
+    % to 1 element can be expressed as a fold
+
+    NList = [1,7,3,5,9,0,2,3,-5].
+    [H|T] = NList.
+
+    % max
+    fold:fold(fun(A,B) when A > B -> A; (_,B) -> B end, H, T).
+    -> 9
+
+    % min
+    fold:fold(fun(A,B) when A < B -> A; (_,B) -> B end, H, T).
+    -> -5
+
+    % sum
+    fold:fold(fun(A,B) -> A + B end, 0, NList).
+    -> 25
+
+additionally you can represent an accumulator as a single element (or a single variable), and an accumulator can be a list. therefore, we can use a fold to build a list. this means **fold is universal in the sense that you can implement pretty much any other recursive function on lists with a fold, even map and filter**:
+
+    % fold
+    fold(_, Start, []) -> Start;
+    fold(F, Start, [H|T]) -> fold(F, F(H,Start), T).
+
+    % reverse
+    freverse(L) -> fold(fun(X,Acc) -> [X|Acc] end, [], L).
+
+    % map
+    fmap(F,L) -> freverse(fold(fun(X,Acc) -> [F(X)|Acc] end, [], L)).
+
+    % filter
+    ffilter(Pred, L) ->
+      F = fun(X,Acc) ->
+        case Pred(X) of
+          true  -> [X|Acc];
+          false -> Acc
+        end
+      end,
+      freverse(fold(F, [], L)).
+
+    % examples
+    fold:freverse([1,2,3]).
+    -> [3,2,1]
+
+    fold:fmap(fun (A) -> A * 10 end, [1,2,3]).
+    -> [10,20,30]
+
+    fold:ffilter(fun (A) -> A > 17 end, [1,4,7,13,54,133]).
+    -> [54,33]
+
+`map`, `filter`s and `fold`s are only one of many abstractions over lists provided by the erlang standard library (see `lists:map/2`, `lists:filter/2`, `lists:foldl/3` and `lists:foldr/3`).
+
+check lists documentations, [official](http://erlang.org/doc/man/lists.html) or [erldocs](https://erldocs.com/maint/stdlib/lists.html), to see all list functions.
+
+</details>
+
+***
 
 # Definitions
 <details>
@@ -1054,15 +1252,46 @@ a recursive function has to terminate to be used in a program. a recursive funct
 
 [resource](https://www.python-course.eu/recursive_functions.php)
 </details>
+<details>
+  <summary><strong>scope and closure</strong></summary><br>
 
-# Tutorials / Presentations
+  **scope** defines what variables you have access to.
+
+  whenever you create a function within another function, you have created a **closure**. the inner function is the closure. this closure is usually returned so you can use the outer function’s variables at a later time.
+</details>
+<details>
+  <summary><strong>variable shadowing</strong></summary><br>
+
+**shadowing** is the term used to describe the act of defining a new variable that has the same name as one that was in the parent scope.
+
+    Fn =
+      fun() -> A = 1,
+        fun(A) -> A = 2 end
+      end.
+
+    (Fn())(2).
+    -> 2
+
+</details>
+
+***
+
+# Resources
+
+## Learning by Order
+- [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.com/)
+
+## Tutorials / Presentations
 - [Parque - Designing a Real Time Game Engine in Erlang](https://www.youtube.com/watch?v=sla-t0ZNlMU), [[source code](https://github.com/mrallen1/parque)]
 
-# Links
+## Links
 - [Official Docs](http://erlang.org/doc/index.html)
+- [Erldocs](https://erldocs.com/)
 - [Erlang Resources](https://gist.github.com/macintux/6349828)
 - [Programming Rules and Conventions](http://www.erlang.se/doc/programming_rules.shtml)
 - [Why did Alan Kay dislike Java](https://www.quora.com/Why-did-Alan-Kay-dislike-Java)
+
+***
 
 # Setup
 #### install erlang
