@@ -1,6 +1,6 @@
 # Hello Erlang!
-These are notes and quotes i take about Erlang while<br>
-reading the [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.com/) book.
+These are notes and quotes i take about Erlang in my learning process.<br>
+Check [resources](#resources) section to see my learning sources.
 
 ***
 
@@ -1179,6 +1179,424 @@ check lists documentations, [official](http://erlang.org/doc/man/lists.html) or 
 
 </details>
 
+## errors and exceptions
+<details>
+  <summary><strong>compile-time errors</strong></summary><br>
+
+compile-time errors are often syntactic mistakes. here's a list of some of the common compile-time error messages and potential resolutions in case you encounter them:
+
+**`module.beam: Module name 'madule' does not match file name 'module'`**<br>
+the module name you've entered in the -module attribute doesn't match the filename
+
+**`./module.erl:2: Warning: function some_function/0 is unused`**<br>
+you have not exported a function, or the place where it's used has the wrong name or arity. it's also possible that you've written a function that is no longer needed.
+
+**`./module.erl:2: function some_function/1 undefined`**<br>
+the function does not exist. You've written the wrong name or arity either in the -export attribute or when declaring the function. this error is also output when the given function could not be compiled, usually because of a syntax error like forgetting to end a function with a period.
+
+**`./module.erl:5: syntax error before: 'SomeCharacterOrWord'`**<br>
+this happens for a variety of reason, namely unclosed parentheses, tuples or wrong expression termination (like closing the last branch of a case with a comma). other reasons might include the use of a reserved atom in your code or unicode characters getting weirdly converted between different encodings.
+
+**`./module.erl:5: syntax error before:`**<br>
+this usually comes up when your line termination is not correct. This is a specific case of the previous error, so just keep an eye out.
+
+**`./module.erl:5: Warning: this expression will fail with a 'badarith' exception`**<br>
+erlang is all about dynamic typing, but remember that the types are strong. In this case, the compiler is smart enough to find that one of your arithmetic expressions will fail (say, `llama + 5`). it won't find type errors much more complex than that, though.
+
+**`./module.erl:5: Warning: variable 'Var' is unused`**<br>
+you declared a variable and never use it afterwards. this might be a bug with your code, so double-check what you have written. otherwise, you might want to switch the variable name to `_` or just prefix it with an underscore (something like `_Var`) if you feel the name helps make the code readable.
+
+**`./module.erl:5: Warning: a term is constructed, but never used`**<br>
+in one of your functions, you're doing something such as building a list, declaring a tuple or an anonymous function without ever binding it to a variable or returning it. this warning tells you you're doing something useless or that you have made some mistake.
+
+**`./module.erl:5: head mismatch`**<br>
+it's possible your function has more than one head, and each of them has a different arity. don't forget that different arity means different functions, and you can't interleave function declarations that way. this error is also raised when you insert a function definition between the head clauses of another function.
+
+**`./module.erl:5: Warning: this clause cannot match because a previous clause at line 4 always matches`**<br>
+a function defined in the module has a specific clause defined after a catch-all one. as such, the compiler can warn you that you'll never even need to go to the other branch.
+
+**`./module.erl:9: variable 'A' unsafe in 'case' (line 5)`**<br>
+you're using a variable declared within one of the branches of a `case ... of` outside of it. this is considered `unsafe`. if you want to use such variables, you'd be better of doing `MyVar = case ... of...`
+</details>
+<details>
+  <summary><strong>run-time errors</strong></summary><br>
+
+list of common run-time errors with an explanation and example code that could generate them.
+
+**`function_clause`**<br>
+all the guard clauses of a function failed, or none of the function clauses' patterns matched.
+
+    lists:sort([3,2,1]).
+    -> [1,2,3]
+
+    lists:sort(fffffff).
+    -> ** exception error: no function clause matching lists:sort(fffffff)
+
+**`case_clause`**<br>
+looks like someone has forgotten a specific pattern in their case, sent in the wrong kind of data, or needed a catch-all clause!
+
+    case "Unexpected Value" of
+       expected_value -> ok;
+       other_expected_value -> 'also ok'
+    end.
+    -> ** exception error: no case clause matching "Unexpected Value"
+
+**`if_clause`**<br>
+this is pretty similar to `case_clause` errors: it can not find a branch that evaluates to `true`. ensuring you consider all cases or add the `catch-all true` clause might be what you need.
+
+    if 2 > 4 -> ok;
+      0 > 1 -> ok
+    end.
+    -> ** exception error: no true branch found when evaluating an if expression
+
+**`badmatch`**<br>
+badmatch errors happen whenever pattern matching fails. this most likely means you're trying to do impossible pattern matches, trying to bind a variable for the second time, or just anything that isn't equal on both sides of the `=` operator (which is pretty much what makes rebinding a variable fail!). note that this error sometimes happens because the programmer believes that a variable of the form `_MyVar` is the same as `_`. variables with an underscore are normal variables, except the compiler won't complain if they're not used. it is not possible to bind them more than once.
+
+    [X,Y] = {4,5}.
+    -> ** exception error: no match of right hand side value {4,5}
+
+**`badarg`**<br>
+this one is really similar to `function_clause` as it's about calling functions with incorrect arguments. the main difference here is that this error is usually triggered by the programmer after validating the arguments from within the function, outside of the guard clauses. we will see how to throw such errors later in this chapter.
+
+    erlang:binary_to_list("heh, already a list").
+    -> ** exception error: bad argument
+    ->     in function  binary_to_list/1
+    ->        called as binary_to_list("heh, already a list")
+
+**`undef`**<br>
+this happens when you call a function that doesn't exist. another reason to get the message is when the module is not in Erlang's search path. by default, Erlang's search path is set to be in the `current directory`. you can add paths by using `code:add_patha/1` or `code:add_pathz/1`.
+
+    lists:random([1,2,3]).
+    -> ** exception error: undefined function lists:random/1
+
+**`badarith`**<br>
+this happens when you try to do arithmetic that doesn't exist, like divisions by zero or between atoms and numbers.
+
+    5 + llama.
+    -> ** exception error: bad argument in an arithmetic expression
+
+**`badfun`**<br>
+the most frequent reason why this error occurs is when you use variables as functions, but the variable's value is not a function.
+
+    hof:add(one, two).
+    -> ** exception error: bad function one
+
+**`badarity`**<br>
+the badarity error is a specific case of `badfun`: it happens when you use higher order functions, but you pass them more (or fewer) arguments than they can handle.
+
+    F = fun(_) -> ok end.
+    F(a,b).
+    -> ** exception error: interpreted function with arity 1 called with two arguments
+
+**`system_limit`**<br>
+there are many reasons why a `system_limit` error can be thrown:
+- too many processes (we'll get there),
+- atoms that are too long,
+- too many arguments in a function,
+- number of atoms too large,
+- too many nodes connected,
+- etc,
+
+to get a full list in details, read the [Erlang Efficiency Guide](http://erlang.org/doc/efficiency_guide/advanced.html#id2265856) on system limits. note that some of these errors are serious enough to crash the whole VM.
+</details>
+<details>
+  <summary><strong>raising exceptions</strong></summary><br>
+
+in trying to monitor the execution of code and protect against `logical errors`, it's often a good idea to provoke run-time crashes so problems will be spotted early.
+
+there are three kinds of exceptions in Erlang: `errors`, `exits`, and `throws`. they all have different uses.
+
+## errors
+calling `erlang:error(Reason)` will end the execution in the current process and include a stack trace of the last functions called with their arguments when you catch it. these are the kind of exceptions that provoke the run-time errors above.
+
+errors are the means for a function to stop its execution when you can't expect the calling code to handle what just happened.
+
+example: if you get an `if_clause` error, what can you do? Change the code and recompile, that's what you can do (other than just displaying a pretty error message).
+
+errors aren't limited to the examples above. you can define your own kind of errors too:
+
+    erlang:error(badarith).
+    -> ** exception error: bad argument in an arithmetic expression
+
+    erlang:error(custom_error).
+    -> ** exception error: custom_error
+
+here, `custom_error` is not recognized by the Erlang shell and it has no custom translation such as "bad argument in ...", but it's usable in the same way and can be handled by the programmer in an identical manner (we'll see how to do that soon).
+
+## exits
+there are two kinds of exits: `internal exits` and `external exits`.
+
+**`internal exits`** are triggered by calling the function `exit/1` and make the current process stop its execution.
+
+**`external exits`** are called with `exit/2` and have to do with multiple processes in the concurrent aspect of erlang.
+
+### internal exits
+
+internal exits are pretty similar to `errors`. to understand when to use one or the other, we need to start looking at the concepts of `actors` and `processes` from far away.
+
+**processes** here can send each other messages. a process can also listen for messages, wait for them. you can also choose what messages to listen to, discard some, ignore others, give up listening after a certain time etc.
+
+these basic concepts let the implementors of Erlang use a special kind of message to communicate exceptions between processes. they act a bit like a *process' last breath*; they're sent right before a process dies and the code it contains stops executing. other processes that were listening for that specific kind of message can then know about the event and do whatever they please with it. this includes logging, restarting the process that died, etc.
+
+while both `erlang:error/1` and `exit/1` can be used in an extremely similar manner, the real difference is in the intent. you can then decide whether what you've got is *simply* an error or a condition worthy of *killing the current process*.
+
+`erlang:error/1` returns a stack trace and `exit/1` doesn't. it's because if you were to have a pretty large stack trace or lots of arguments to the current function, copying the exit message to every listening process would mean copying the data. In some cases, this could become unpractical.
+
+### external exits
+...
+
+## throws
+a throw is a class of exceptions used for cases that the programmer can be expected to handle.
+
+in comparison with `exits` and `errors`, they don't really carry any *crash that process!* intent behind them, but rather control flow.
+
+The syntax to throw an exception is:
+
+    throw(permission_denied).
+    -> ** exception throw: permission_denied
+
+throws can also be used for non-local returns when in deep recursion.
+
+example could be the array module, where there is a lookup function that can return a user-supplied default value if it can't find the element needed. when the element can't be found, the value `default` is thrown as an exception, and the top-level function handles that and substitutes it with the user-supplied default value. this keeps the programmer of the module from needing to pass the default value as a parameter of every function of the lookup algorithm. this lets the implementer only write for the successful cases.
+
+</details>
+<details>
+  <summary><strong>dealing with exceptions</strong></summary><br>
+
+a `try ... catch` is a way to evaluate an expression while letting you handle the successful case as well as the errors encountered.
+
+    try Expression1,...,ExpressionN of
+      Pattern1 [when Guard1] -> PatternExpressions1;
+      Pattern2 [when Guard2] -> PatternExpressions2;
+      ...
+      PatternN [when GuardN] -> PatternExpressionN
+    catch
+      ExceptionType:Reason1 [when ExceptionGuard1] -> ExceptionExpressions1;
+      ExceptionType:Reason2 [when ExceptionGuard2] -> ExceptionExpressions2;
+      ...
+      ExceptionType:ReasonN [when ExceptionGuardN] -> ExceptionExpressionsN
+    after
+      AfterExpressions
+    end.
+
+- the `Expression` in between `try` and `of` is said to be `protected`.
+- the `patterns` and `expressions` in between the `try ... of` and `catch` behave in exactly the same manner as a `case ... of`.
+- the `catch` part you can replace `TypeOfError` by either `error`, `throw` or `exit`. if no type is provided, a `throw` is assumed.
+
+> **see [exceptions.erl](./code/exceptions/exceptions.erl)**
+
+    exceptions:catch_throws(fun() -> cat end).
+    -> ok
+
+    exceptions:try_get(fun() -> cat end).
+    -> cat
+
+    exceptions:try_get_2(fun() -> one end).
+    -> 1
+    exceptions:try_get_2(fun() -> two end).
+    -> 2
+    exceptions:try_get_2(fun() -> three end).
+    -> three
+
+    exceptions:catch_throws(fun() -> throw(thrown) end).
+    -> {throw,caught,thrown}
+
+    exceptions:catch_throws(fun() -> erlang:error(pang) end).
+    -> ** exception error: pang
+
+we see exception because this `try ... catch` used in `catch_throws` function is only receiving `throws`. as stated earlier, this is because when no type is mentioned, a throw is assumed.
+
+    exceptions:catch_errors(fun() -> erlang:error("Die!") end).
+    -> {error,caught,"Die!"}
+
+    exceptions:catch_exits(fun() -> exit(goodbye) end).
+    -> {exit,caught,goodbye}
+
+and all in one example;
+
+    exceptions:talk().
+    -> "blah blah"
+
+    exceptions:black_knight(fun exceptions:talk/0).
+    -> "None shall pass."
+
+    exceptions:black_knight(fun() -> exceptions:sword(1) end).
+    -> "It is but a scratch."
+
+    exceptions:black_knight(fun() -> exceptions:sword(2) end).
+    -> "I've had worse."
+
+    exceptions:black_knight(fun() -> exceptions:sword(3) end).
+    -> "Come on you pansy!"
+
+    exceptions:black_knight(fun() -> exceptions:sword(4) end).
+    -> "Just a flesh wound."
+
+    exceptions:black_knight(fun() -> exceptions:sword(5) end).
+    -> "Just a flesh wound."
+
+in practice, you should be careful when using the `catch-all` patterns: **try to protect your code from what you can handle, but not any more than that. Erlang has other facilities in place to take care of the rest.**
+
+there's also an additional clause that can be added after a `try ... catch` that will always be executed. this is equivalent to the `finally` block in many other languages: `after`.
+
+    try Expr of
+      Pattern -> Expr1
+    catch
+      Type:Exception -> Expr2
+    after % this always gets executed
+      Expr3
+    end
+
+however, you can not get any return value out of the `after` construct. therefore, `after` is mostly used to run code with **side effects**. the canonical use of this is when you want to make sure a file you were reading gets closed whether exceptions are raised or not.
+
+it is possible to have **more than one expression** between the `try` and the `of`. but when we use many expressions in that manner, we might not always care about what the return value is. the `of` part thus becomes a bit useless. good news is you can just give it up. check `exceptions:whoa/0` and `exceptions:im_impressed/0` functions.
+
+    exceptions:whoa().
+    -> {caught,throw,up}
+
+    exceptions:im_impressed().
+    -> {caught,throw,up}
+
+</details>
+<details>
+  <summary><strong>error vs exit vs throw</strong></summary><br>
+
+the real difference between the three types is the communication intent, not a special behaviour. so from the pure theoretical point of view an error exception can be replaced by a throw exception without any side effect. obviously, the communication intent is not negligible: indeed, throw exceptions are usually documented while errors are not intended for being formalized.
+
+**`error`**<br>
+error signals that something very bad happened in the system, something that was unexpected to the author of the code raising the exception. even if this type of exception can be raised explicitly, it is usually raised by the Erlang run-time system. this type of exception also contains a stack trace.
+
+**`exit`**<br>
+exit means that your code is being told to stop immediately.
+
+**`throw`**<br>
+throw identifies an exception that a called function voluntarily raises (throwing it at you); such exceptions shall be documented, i.e. the documentation of the function you are calling shall state that this exception may be raised and specify under what conditions this may happen.
+</details>
+<details>
+  <summary><strong>protected part cant be tail recursive</strong></summary><br>
+
+the protected part of an exception can't be tail recursive. the VM must always keep a reference there in case there's an exception popping up.
+
+because the `try ... catch` construct without the `of` part has nothing but a protected part, calling a recursive function from there might be dangerous for programs supposed to run for a long time (which is Erlang's niche). after enough iterations, you'll go out of memory or your program will get slower without really knowing why. by putting your recursive calls between the `of` and `catch`, you are not in a protected part and you will benefit from `Last Call Optimisation`.
+
+some people use `try ... of ... catch` rather than `try ... catch` by default to avoid unexpected errors of that kind, except for obviously non-recursive code with results that won't be used by anything.
+</details>
+<details>
+  <summary><strong>catch</strong></summary><br>
+
+> **see [exceptions.erl](./code/exceptions/exceptions.erl)**
+
+the keyword `catch` and basically captures all types of exceptions on top of the good results. it displays a different representation of exceptions.
+
+    catch 1+1.
+    -> 2
+
+    catch throw(whoa).
+    -> whoa
+
+    catch exit(die).
+    -> {'EXIT',die}
+
+    catch 1/0.
+    -> {'EXIT',{badarith,[{erlang,'/',[1,0],[]},
+        {erl_eval,do_apply,6,
+                  [{file,"erl_eval.erl"},
+                  {line,684}]},
+        {erl_eval,expr,5,
+                  [{file,"erl_eval.erl"},
+                  {line,437}]},
+        {shell,exprs,7,
+              [{file,"shell.erl"},{line,686}]},
+        {shell,eval_exprs,7,
+              [{file,"shell.erl"},{line,642}]},
+        {shell,eval_loop,3,
+              [{file,"shell.erl"},
+                {line,627}]}]}}
+
+we can see that `exits` and `errors` are both represented as `{'EXIT', Reason}`. that's due to errors being bolted to the language after exits (they kept a similar representation for backwards compatibility).
+
+the way to read this stack trace is as follows:
+
+    catch doesnt:exist(a,4).
+    -> {'EXIT',{undef,[{doesnt,exist,[a,4]},
+        {erl_eval,do_apply,5},
+        {erl_eval,expr,5},
+        {shell,exprs,6},
+        {shell,eval_exprs,6},
+        {shell,eval_loop,3}]}}
+
+- the type of error is `undef`, which means the function you called is not defined
+- the list right after the type of error is a `stack trace`
+- the tuple on top of the stack trace represents the last function to be called (`{Module, Function, Arguments}`). That's your undefined function.
+- the tuples after that are the functions called before the error. this time they're of the form `{Module, Function, Arity}`.
+
+you can also manually get a stack trace by calling `erlang:get_stacktrace/0` in the process that crashed.
+
+you'll often see catch written in the following manner
+
+    catcher(X,Y) ->
+      case catch X/Y of
+        {'EXIT', {badarith,_}} -> "uh oh";
+        N -> N
+      end.
+
+and as expected:
+
+    exceptions:catcher(3,3).
+    -> 1.0
+
+    exceptions:catcher(6,0).
+    -> "uh oh"
+
+there are a few problems with `catch`
+
+first of it is operator precedence
+
+    X = catch 4+2.
+    -> * 1: syntax error before: 'catch'
+
+    X = (catch 4+2).
+    -> 6
+
+another problem is that you can't see the difference between `what looks like the underlying representation of an exception` and `a real exception`
+
+    catch erlang:boat().
+    -> {'EXIT',{undef,[{erlang,boat,[]},
+        {erl_eval,do_apply,5},
+        {erl_eval,expr,5},
+        {shell,exprs,6},
+        {shell,eval_exprs,6},
+        {shell,eval_loop,3}]}}
+
+    catch exit({undef,[{erlang,boat,[]},
+        {erl_eval,do_apply,5},
+        {erl_eval,expr,5},
+        {shell,exprs,6},
+        {shell,eval_exprs,6},
+        {shell,eval_loop,3}]}).
+    -> {'EXIT',{undef,[{erlang,boat,[]},
+        {erl_eval,do_apply,5},
+        {erl_eval,expr,5},
+        {shell,exprs,6},
+        {shell,eval_exprs,6},
+        {shell,eval_loop,3}]}}
+
+and you can't know the difference between `an error` and `an actual exit`. you could also have used `throw/1` to generate the above exception.
+
+in fact, a `throw/1` in a `catch` might also be problematic in another scenario:
+
+    one_or_two(1) -> return;
+    one_or_two(2) -> throw(return).
+
+    catch exceptions:one_or_two(1).
+    -> return
+
+    catch exceptions:one_or_two(2).
+    -> return
+
+because we're behind a catch, we can never know if the function threw an exception or if it returned an actual value!
+</details>
+
 ***
 
 # Definitions
@@ -1278,7 +1696,7 @@ a recursive function has to terminate to be used in a program. a recursive funct
 
 # Resources
 
-## Learning by Order
+## Learning Sources by Order
 - [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.com/)
 
 ## Tutorials / Presentations
