@@ -1679,6 +1679,107 @@ because we're behind a catch, we can never know if the function threw an excepti
 
 </details>
 
+## data structures
+<details>
+  <summary><strong>records</strong></summary><br>
+
+records are useful whenever you have a small data structure where you want to access the attributes by name directly.
+
+> **see [records.erl](./code/data_structures/records.erl)**
+
+erlang records are just syntactic sugar on top of `tuple`s.
+
+    records:first_robot().
+    -> {robot,"Mechatron",handmade,undefined,
+       ["Moved by a small man inside"]}
+
+but the Erlang shell has a command `rr(Module)` that lets you load record definitions from `Module`:
+
+    rr(records).
+    -> [robot]
+
+    records:first_robot().
+    -> #robot{name = "Mechatron",type = handmade,
+          hobbies = undefined,
+          details = ["Moved by a small man inside"]}
+
+    % defaults in action
+
+    records:car_factory("Jokeswagen").
+    -> #robot{name = "Jokeswagen",type = industrial,
+          hobbies = "building cars",details = []}
+
+> see [using shell](#using-shell) for more record specific shell commands.
+
+extracting values from records
+
+**dot syntax**
+
+    Crusher = #robot{name="Crusher", hobbies=["Crushing people","petting cats"]}.
+
+    Crusher#robot.hobbies.
+    -> ["Crushing people","petting cats"]
+
+    NestedBot = #robot{details=#robot{name="erNest"}}.
+    -> #robot{name = undefined,type = industrial,
+          hobbies = undefined,
+          details = #robot{name = "erNest",type = industrial,
+                        hobbies = undefined,details = []}}
+
+    NestedBot#robot.details#robot.name.
+    -> "erNest"
+
+`#<record>.<field>` outputs is which element of the underlying tuple field is
+
+    #robot.name.
+    -> 2
+    #robot.type.
+    -> 3
+
+**records can be used in `function heads` to `pattern match` and also in `guards`**
+
+    records:admin_panel(#user{id=1, name="ferd", group=admin, age=96}).
+    -> "ferd is allowed!"
+
+    records:admin_panel(#user{id=2, name="you", group=users, age=66}).
+    -> "you is not allowed"
+
+    records:adult_section(#user{id=21, name="Bill", group=users, age=72}).
+    -> allowed
+
+    records:adult_section(#user{id=22, name="Noah", group=users, age=13}).
+    -> forbidden
+
+updating a record
+
+    MyRobot = #robot{name="Ulbert", hobbies=["trying to have feelings"]}.
+    -> #robot{name = "Ulbert",type = industrial,
+          hobbies = ["trying to have feelings"],
+          details = []}
+
+    MyRepairedRobot = records:repairman(MyRobot).
+    -> {repaired,#robot{name = "Ulbert",type = industrial,
+                    hobbies = ["trying to have feelings"],
+                    details = ["Repaired by repairman"]}}
+
+    % the data in MyRobot is not changed btw!
+    MyRobot.
+    -> #robot{name = "Ulbert",type = industrial,
+          hobbies = ["trying to have feelings"],
+          details = []}
+
+syntax to update records is a bit special. it looks like we're updating the record in place (`Rob#robot{Field=NewValue}`) but it's all compiler trickery to call the underlying `erlang:setelement/3` function.
+
+its possible share records across modules with the help of `header` files. erlang header files are pretty similar to their C counter-part: they're nothing but a snippet of code that gets added to the module as if it were written there in the first place. header files has `.hrl` extension.
+
+> **see [records.hrl](./code/data_structures/records.hrl)**
+
+    records:included().
+    -> #included{some_field = "Some value",some_default = "yeah!",
+          unimaginative_name = undefined}
+
+</details>
+
 ***
 
 # Definitions
@@ -1802,8 +1903,19 @@ a recursive function has to terminate to be used in a program. a recursive funct
   - expressions have to be terminated with a period followed by whitespace (line break, a space etc.), otherwise they won't be executed
   - `help().` print help
   - `q().` quit
-  - `f(Variable)` clear a variable
-  - `f()` clear all variables
+  - `f`
+    - `f(Variable)` clear a variable
+    - `f()` clear all variables
+  - `rr`
+    - `r(Module)` load record definitions of Module
+    - `rr("*")` load record definitions of all modules
+    - it can take also a list as a second argument to specify which records to load.
+  - `rd(Name, Definition)` define a record
+  - `rf()` unload all records
+    - `rf(Name)` or `rf([Names])` to get rid of specific definitions
+  - `rl()` print all record definitions
+    - `rl(Name)` or `rl([Names])` to restrict it to specific records
+  - `rp(Term)` convert a tuple to a record (given the definition exists)
   - `ctrl+g` abort menu
   - `ctrl+a` go to beginning of line
   - `ctrl+e` go to end of line
