@@ -12,6 +12,7 @@ Check [resources](#resources) section to see my learning sources.
 - every function needs to return something
 - erlang doesn't allow default arguments in functions
 - erlang is built on the notion that a failure in one of the components should not affect the whole system
+- every erlang term can be compared to any other
 </details>
 
 ## basic data types
@@ -198,6 +199,22 @@ tuples can also be useful when working with single values.
 a tuple which contains an atom with one element following it is called a `tagged tuple`.
 
     {point, {X,Y}}.
+
+get `nth` element of a tuple
+
+    element(2,{a,b,c}).
+    -> b
+
+you can do some arithmetic classifying operations on tuples such as sort, min, max, etc.
+
+    lists:sort([{2, b}, {4, d}, {1, a}, {3, c}]).
+    -> [{1,a},{2,b},{3,c},{4,d}]
+
+    erlang:min({3, x}, {1, y}).
+    -> {1, y}
+
+    erlang:max({3, x}, {7, y}).
+    -> {7, y}
 </details>
 <details>
   <summary><strong>lists</strong></summary><br>
@@ -319,6 +336,14 @@ but even there is no real strings, there are string operations on erlang;
 
     string:to_float("1.3").
     -> {1.3,[]}
+
+    list_to_integer("23").
+    -> 23
+
+    string:to_integer("23").
+    -> {23,[]}
+
+> **see [road.erl](./code/examples/road.erl) as example of string operations**
 
 </details>
 <details>
@@ -570,6 +595,18 @@ erlang code is compiled to `bytecode` in order to be used by the `virtual machin
 - from shell `c(FileName)`
   - c("code/function_syntax/pattern").
 
+## using without compiling the code
+
+[`escript`](http://erlang.org/doc/man/escript.html) provides support for running short Erlang programs without having to compile them first, and an easy way to retrieve the command-line arguments.
+
+## compiling from command line
+
+    $ erlc code/examples/road.erl
+    -> code/examples/road.erl:2: Warning: export_all flag enabled - all functions will be exported
+
+    $ erl -noshell -run road main code/examples/road.txt
+    -> [{b,10},{x,30},{a,5},{x,20},{b,2},{b,8}]
+
 ## compiling code from shell
 
 `erl`
@@ -595,7 +632,7 @@ erlang code is compiled to `bytecode` in order to be used by the `virtual machin
     compile:file(hello, [debug_info, export_all]).
     -> {ok,hello}
 
-## usage
+### usage in shell after compiling from shell
 
 after code is compiled, a `hello.beam` file will be added next to `hello.erl` in your directory. this is the compiled module.
 `.beam` stands for `Bogdan/Björn's Erlang Abstract Machine`, which is the VM itself.
@@ -1013,6 +1050,8 @@ the areas which tail recursion is become more important are in functions that ar
 
     recursive:tail_lenient_zip([a,b,c,d], [1,2,3]).
     -> [{a,1},{b,2},{c,3}]
+
+most of the times, as a last step, (before returning them), we will reverse our lists because they were built in a tail-recursive manner. examples in recursive.erl doesnt follow this pratic. see advanced examples.
 
 </details>
 
@@ -1626,6 +1665,18 @@ in fact, a `throw/1` in a `catch` might also be problematic in another scenario:
     -> return
 
 because we're behind a catch, we can never know if the function threw an exception or if it returned an actual value!
+</details>
+
+## files
+<details>
+  <summary><strong>reading files</strong></summary><br>
+
+    {ok, Binary} = file:read_file("code/examples/road.txt").
+    -> {ok,<<"50\n10\n30\n5\n90\n20\n40\n2\n25\n10\n8\n0">>}
+
+    S = string:tokens(binary_to_list(Binary), "\r\n\t ").
+    -> ["50","10","30","5","90","20","40","2","25","10","8","0"]
+
 </details>
 
 ***
