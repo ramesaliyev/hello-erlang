@@ -276,6 +276,15 @@ or use pattern matching
     Tail.
     -> [2,3,4]
 
+    [First, Second | Rest] = [1,2,3,4,5].
+    -> [1,2,3,4,5]
+    First.
+    -> 1
+    Second.
+    -> 2
+    Rest.
+    -> [3,4,5]
+
 add head
 
     List = [2,3,4].
@@ -288,6 +297,28 @@ add head
     -> [3,2,1]
 
 note: using the form `[1 | 2]` gives what we call an `improper list`. improper lists will work when you pattern match in the `[Head|Tail]` manner, but will fail to be used with standard functions of erlang (even `length()`). this is because erlang expects `proper lists`. proper lists **end with an empty list** as their last cell. when declaring an item like `[2]`, the list is automatically formed in a proper manner. as such, `[1|[2]]` would work! improper lists, although syntactically valid, are of very limited use outside of user-defined data structures.
+
+</details>
+<details>
+  <summary><strong>strings</strong></summary><br>
+
+we know that strings are actually lists and there is no such thing as a real string in erlang. but we can create strings (lists) easily with double quote `"`. remember single quotes `'` are for atoms.
+
+    String = "my string".
+
+    is_list(String).
+    -> true
+
+but even there is no real strings, there are string operations on erlang;
+
+    string:uppercase("hello").
+    -> "HELLO"
+
+    string:tokens("10 4 3 + 2 * -", " ").
+    -> ["10","4","3","+","2","*","-"]
+
+    string:to_float("1.3").
+    -> {1.3,[]}
 
 </details>
 <details>
