@@ -2203,6 +2203,18 @@ sets of sets (`sofs`) are implemented with `sorted lists`, stuck inside a tuple 
 
 [sofs](https://erldocs.com/maint/stdlib/sofs.html) module could be used.
 </details>
+<details>
+  <summary><strong>directed graph</strong></summary><br>
+
+in mathematics, and more specifically in graph theory, a directed graph (or digraph) is a graph that is made up of a set of vertices connected by edges, where the edges have a direction associated with them. [wikipedia](http://en.wikipedia.org/wiki/Directed_graph)
+
+![directed graph](./assets/directed_graph.png)
+
+`directed graphs` in Erlang are implemented as two modules, [digraph](https://erldocs.com/maint/stdlib/digraph.html) and [digraph_utils](https://erldocs.com/maint/stdlib/digraph_utils). the `digraph` module basically allows the construction and modification of a directed graph: manipulating edges and vertices, finding paths and cycles, etc. on the other hand, `digraph_utils` allows you to navigate a graph (postorder, preorder), testing for cycles, arborescences or trees, finding neighbors, and so on.
+
+because directed graphs are closely related to set theory, the `sofs` module contains a few functions letting you convert [families to digraphs](https://erldocs.com/maint/stdlib/sofs.html#family_to_digraph/2) and [digraphs to families](https://erldocs.com/maint/stdlib/sofs.html#digraph_to_family/2).
+
+</details>
 
 ***
 
