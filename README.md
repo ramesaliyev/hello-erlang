@@ -1779,6 +1779,206 @@ its possible share records across modules with the help of `header` files. erlan
           unimaginative_name = undefined}
 
 </details>
+<details>
+  <summary><strong>key-value stores</strong></summary><br>
+
+## proplist
+
+can be used for small amounts of data, a `proplist` is any list of tuples of the form `[{Key,Value}]`. there is no other rule than that. [proplists](https://erldocs.com/maint/stdlib/proplists.html) module could be used. it contains functions such as `proplists:delete/2`, `proplists:get_value/2`, `proplists:get_all_values/2`, `proplists:lookup/2` and `proplists:lookup_all/2`.
+
+    PList = [{a, 1}, {b, 20}, {b, 21}, {c, 3}].
+    -> [{a,1},{b,20},{b,21},{c,3}]
+
+    proplists:get_keys(PList).
+    -> [a,b,c]
+
+    proplists:get_value(b, PList).
+    -> 20
+
+    proplists:get_all_values(b, PList).
+    -> [20, 21]
+
+    proplists:lookup(b, PList).
+    -> {b,20}
+
+    proplists:lookup_all(b, PList).
+    -> [{b,20},{b,21}]
+
+    proplists:delete(b, PList).
+    -> [{a,1},{c,3}]
+
+there is no function to `add` or `update` an element of the list. this shows how loosely defined proplists are as a data structure. to get these functionalities, you must cons your element manually (`[NewElement|OldList]`) and use functions such as `lists:keyreplace/4`.
+
+because proplists are so loosely defined, they're often used to deal with configuration lists, and general description of a given item. proplists are not exactly complete data structures. they're more of a common pattern that appears when using lists and tuples to represent some object or item; the proplists module is a bit of a toolbox over such a pattern.
+
+## orddict
+
+a more complete key-value store for small amounts of data. orddicts (ordered dictionaries) are proplists with a taste for formality. each key can be there once, the whole list is sorted for faster average lookup, etc. [orddict](https://erldocs.com/maint/stdlib/orddict.html) module could be used.
+
+functions for the `CRUD` usage include; `orddict:store/3`, `orddict:find/2`, `orddict:fetch/2`, `orddict:erase/2`.
+
+    ODict = orddict:new().
+    -> []
+
+    ODict2 = orddict:store(a, 1, ODict).
+    -> [{a,1}]
+
+    orddict:find(a, ODict).
+    -> error
+
+    orddict:find(a, ODict2).
+    -> {ok,1}
+
+    orddict:fetch(a, ODict).
+    -> ** exception error: no function clause matching
+                    orddict:fetch(a,[]) (orddict.erl, line 80)
+
+    orddict:fetch(a, ODict2).
+    -> 1
+
+    ODict3 = orddict:store(c, 3, ODict2).
+    -> [{a,1},{c,3}]
+
+    ODict4 = orddict:store(b, 2, ODict3).
+    -> [{a,1},{b,2},{c,3}]
+
+    ODict5 = orddict:erase(c, ODict4).
+    -> [{a,1},{b,2}]
+
+orddicts are **a generally good compromise between `complexity` and `efficiency` up to about 75 elements**. after that amount, you should switch to different key-value stores.
+
+## dicts
+
+one of two key-value structures/modules to deal with larger amounts of data. [dict](https://erldocs.com/maint/stdlib/dict.html) module could be used.
+
+dictionaries have the same interface as `orddicts`: `dict:store/3`, `dict:find/2`, `dict:fetch/2`, `dict:erase/2` and every other function, such as `dict:map/2` and `dict:fold/2` (useful to work on the whole data structure). **dicts are very good choices to scale orddicts up** whenever it is needed.
+
+## general balanced trees
+
+one of two key-value structures/modules to deal with larger amounts of data. [gb_trees](https://erldocs.com/maint/stdlib/gb_trees.html) module could be used.
+
+`General Balanced Trees`, have a bunch more functions leaving you more direct control over how the structure is to be used. there are basically two modes for `gb_trees`: the mode where you know your structure in and out (**smart mode**), and the mode where you can't assume much about it (**naive mode**). In naive mode, the functions are `gb_trees:enter/3`, `gb_trees:lookup/2` and `gb_trees:delete_any/2`. related smart functions are `gb_trees:insert/3`, `gb_trees:get/2`, `gb_trees:update/3` and `gb_trees:delete/2`. there is also `gb_trees:map/2`, which is always a nice thing when you need it.
+
+disadvantage of **naive** functions over **smart** ones is that because `gb_trees` are balanced trees, whenever you insert a new element (or delete a bunch), it might be possible that the tree will need to balance itself. this can take time and memory (even in useless checks just to make sure). the **smart** function all assume that the key is present in the tree: this lets you skip all the safety checks and results in faster times.
+
+    Tree = gb_trees:empty().
+    -> {0,nil}
+
+    Tree2 = gb_trees:enter(a, 10, Tree).
+    -> {1,{a,10,nil,nil}}
+
+    % naive (insert or update)
+
+    gb_trees:enter(a, 11, Tree2).
+    -> {1,{a,11,nil,nil}}
+
+    gb_trees:enter(b, 20, Tree2).
+    -> {2,{a,10,nil,{b,20,nil,nil}}}
+
+    % smart (insert only)
+
+    gb_trees:insert(a, 11, Tree2).
+    -> ** exception error: {key_exists,a}
+     in function  gb_trees:insert_1/4 (gb_trees.erl, line 319)
+     in call from gb_trees:insert/3 (gb_trees.erl, line 278)
+
+    gb_trees:insert(b, 20, Tree2).
+    -> {2,{a,10,nil,{b,20,nil,nil}}}
+
+    % smart (update only)
+
+    gb_trees:update(a, 11, Tree2).
+    -> {1,{a,11,nil,nil}}
+
+    gb_trees:update(b, 20, Tree2).
+    -> ** exception error: no function clause matching
+                    gb_trees:update_1(b,20,nil) (gb_trees.erl, line 263)
+                    in function  gb_trees:update_1/3 (gb_trees.erl, line 266)
+                    in call from gb_trees:update/3 (gb_trees.erl, line 258)
+
+    Tree3 = gb_trees:enter(c, 30, gb_trees:enter(b, 20, Tree2)).
+    -> {3,{a,10,nil,{b,20,nil,{c,30,nil,nil}}}}
+
+    % naive (try to get, give None if not exist)
+
+    gb_trees:lookup(b, Tree3).
+    -> {value,20}
+
+    gb_trees:lookup(d, Tree3).
+    -> none
+
+    % smart (get and crash if not exits)
+    gb_trees:get(b, Tree3).
+    -> 20
+
+    gb_trees:get(d, Tree3).
+    -> ** exception error: no function clause matching
+                    gb_trees:get_1(d,nil) (gb_trees.erl, line 244)
+
+    % naive delete if exist
+
+    gb_trees:delete_any(a, Tree3).
+    -> {2,{b,20,nil,{c,30,nil,nil}}}
+
+    gb_trees:delete_any(d, Tree3).
+    -> {3,{a,10,nil,{b,20,nil,{c,30,nil,nil}}}}
+
+    % smart delete, crash if not exist
+
+    gb_trees:delete(a, Tree3).
+    -> {2,{b,20,nil,{c,30,nil,nil}}}
+
+    gb_trees:delete(d, Tree3).
+    -> ** exception error: no function clause matching
+                    gb_trees:delete_1(d,nil) (gb_trees.erl, line 408)
+                    in function  gb_trees:delete_1/2 (gb_trees.erl, line 412)
+                    in call from gb_trees:delete_1/2 (gb_trees.erl, line 412)
+                    in call from gb_trees:delete/2 (gb_trees.erl, line 404)
+
+    % other operations
+
+    Tree4 = gb_trees:insert(i, 99, gb_trees:insert(j, 0, Tree2)).
+    -> {3,{a,10,nil,{j,0,{i,99,nil,nil},nil}}}
+
+    gb_trees:smallest(Tree4).
+    -> {a,10}
+
+    gb_trees:largest(Tree4).
+    -> {j,0}
+
+    % iterating trees
+
+    Tree4Iterator = gb_trees:iterator(Tree4).
+    -> [{a,10,nil,{j,0,{i,99,nil,nil},nil}}]
+
+    Next1 = gb_trees:next(Tree4Iterator).
+    -> {a,10,[{i,99,nil,nil},{j,0,{i,99,nil,nil},nil}]}
+
+    Next2 = gb_trees:next(element(3, Next1)).
+    -> {i,99,[{j,0,{i,99,nil,nil},nil}]}
+
+    Next3 = gb_trees:next(element(3, Next2)).
+    -> {j,0,[]}
+
+    Next4 = gb_trees:next(element(3, Next3)).
+    -> none
+
+## dicts vs gb_trees
+
+- `dicts` have the best read speeds while the `gb_trees` tend to be a little quicker on other operations.
+- `dicts` have a fold function, `gb_trees` don't
+
+## other stores
+
+some special key-value stores exist to deal with resources of different size
+
+- [ets](https://erldocs.com/maint/stdlib/ets.html), built-in term storage
+- [dets](https://erldocs.com/maint/stdlib/dets.html), a disk-based term storage
+- [mnesia](https://erldocs.com/maint/mnesia/mnesia.html), a distributed telecommunications DBMS
+
+their use is strongly related to the concepts of multiple processes and distribution. because of this, they'll only be approached later on.
+
+</details>
 
 ***
 
