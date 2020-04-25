@@ -2144,6 +2144,38 @@ Standalone data type at runtime||✓|
 Fast direct-index access|✓||
 
 </details>
+<details>
+  <summary><strong>arrays</strong></summary><br>
+
+`arrays` allow you to access elements with numerical indices and to fold over the whole structure while possibly ignoring undefined slots. [array](https://erldocs.com/maint/stdlib/array.html) module could be used.
+
+    % extendible array.
+    EArr = array:new().
+
+    % fixed-size array.
+    Arr = array:new(2).
+    -> {array,2,0,undefined,10}
+
+    Arr2 = array:set(0, 1, Arr).
+    -> {array,2,0,undefined,
+          {1,undefined,undefined,undefined,undefined,undefined,
+            undefined,undefined,undefined,undefined}}
+
+    Arr3 = array:set(1, 2, Arr2).
+    -> {array,2,0,undefined,
+       {1,2,undefined,undefined,undefined,undefined,
+        undefined,undefined,undefined,undefined}}
+
+    Arr4 = array:set(2, 3, Arr3).
+    -> ** exception error: bad argument
+          in function  array:set/3 (array.erl, line 584)
+
+    % get
+    array:get(1, Arr3).
+    -> 2
+
+erlang arrays, at the opposite of their imperative counterparts, **are not able to have such things as constant-time insertion or lookup**. because they're usually slower than those in languages which support destructive assignment and that the style of programming done with Erlang doesn't necessary lend itself too well to arrays and matrices, **they are rarely used in practice**.
+</details>
 
 ***
 
