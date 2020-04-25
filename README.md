@@ -2,6 +2,8 @@
 These are notes and quotes i take about Erlang in my learning process.<br>
 Check [resources](#resources) section to see my learning sources.
 
+*first make it work, then make it beautiful, and only if you need to, make it fast.*
+
 ***
 
 # Topics
@@ -156,7 +158,7 @@ erlang has no such things as boolean `true` and `false`. **the terms true and fa
 ```
 
 the correct ordering of each element in a comparison is the following: <br>
-`number` **<** `atom` **<** `reference` **<** `fun` **<** `port` **<** `pid` **<** `tuple` **<** `list` **<** `bit string`
+`number` **<** `atom` **<** `reference` **<** `fun` **<** `port` **<** `pid` **<** `tuple` **<** `map` **<** `list` **<** `bit string`
 
 this is why you can compare anything with anything.
 ```
@@ -865,7 +867,7 @@ math operations and functions about data types, such as `is_integer/1`, `is_atom
 
 **list of available functions;**
 
-type checking functions: `is_atom/1`, `is_binary/1`, `is_bitstring/1`, `is_boolean/1`, `is_builtin/3`, `is_float/1`, `is_function/1`, `is_function/2`, `is_integer/1`, `is_list/1`, `is_number/1`, `is_pid/1`, `is_port/1`, `is_record/2`, `is_record/3`, `is_reference/1`, `is_tuple/1`
+type checking functions: `is_atom/1`, `is_binary/1`, `is_bitstring/1`, `is_boolean/1`, `is_builtin/3`, `is_float/1`, `is_function/1`, `is_function/2`, `is_integer/1`, `is_list/1`, `is_map/1`, `is_number/1`, `is_pid/1`, `is_port/1`, `is_record/2`, `is_record/3`, `is_reference/1`, `is_tuple/1`
 
 other allowed functions: `abs(Number)`, `bit_size(Bitstring)`, `byte_size(Bitstring)`, `element(N`, `Tuple)`, `float(Term)`, `hd(List)`, `length(List)`, `node()`, `node(Pid|Ref|Port)`, `round(Number)`, `self()`, `size(Tuple|Bitstring)`, `tl(List)`, `trunc(Number)`, `tuple_size(Tuple)`
 
@@ -974,7 +976,7 @@ whole list:
 <details>
   <summary><strong>type checking</strong></summary><br>
 
-`is_atom/1`, `is_binary/1`, `is_bitstring/1`, `is_boolean/1`, `is_builtin/3`, `is_float/1`, `is_function/1`, `is_function/2`, `is_integer/1`, `is_list/1`, `is_number/1`, `is_pid/1`, `is_port/1`, `is_record/2`, `is_record/3`, `is_reference/1`, `is_tuple/1`
+`is_atom/1`, `is_binary/1`, `is_bitstring/1`, `is_boolean/1`, `is_builtin/3`, `is_float/1`, `is_function/1`, `is_function/2`, `is_integer/1`, `is_list/1`, `is_map/1`, `is_number/1`, `is_pid/1`, `is_port/1`, `is_record/2`, `is_record/3`, `is_reference/1`, `is_tuple/1`
 </details>
 
 ## recursion
@@ -1979,6 +1981,169 @@ some special key-value stores exist to deal with resources of different size
 their use is strongly related to the concepts of multiple processes and distribution. because of this, they'll only be approached later on.
 
 </details>
+<details>
+  <summary><strong>maps</strong></summary><br>
+
+`maps` are a data type similar to the `dict` data structure in intent, and has been given a module with a similar interface and semantics. [maps](https://erldocs.com/maint/stdlib/maps.html) module could be used. some of supported operations:
+
+    % create new empty map
+    Map1 = maps:new().
+    -> #{}
+
+    % add an entry
+    Map2 = maps:put(a, 10, Map1).
+    -> #{a => 10}
+
+    % update existed key, error if not exist
+    Map3 = maps:update(a, 100, Map2).
+    -> #{a => 100}
+
+    % get existed key, error if not exist
+    maps:get(a, Map3).
+    -> 100
+
+    % get existed key, return default if not exist
+    maps:get(b, Map3, 3).
+    -> 3
+
+    % find key, return error atom if not exist
+    maps:find(a, Map3).
+    -> {ok,100}
+    maps:find(b, Map3).
+    -> error
+
+    Map4 = maps:put(c, 30, maps:put(b, 20, Map3)).
+    -> #{a => 100,b => 20,c => 30}
+
+    % remove single key, do nothing if not exist
+    maps:remove(a, Map4).
+    -> #{b => 20,c => 30}
+
+    % remove multiple key, do nothing for not existent keys
+    maps:without([a,c], Map4).
+    -> #{b => 20}
+
+    % pick given keys from map
+    maps:with([a,c], Map4).
+    -> #{a => 100,c => 30}
+
+    % fold
+    maps:fold(fun(K, V, Acc) -> V + Acc end, 0, Map4).
+    -> 150
+
+    % map
+    maps:map(fun(K, V) -> V * 10 end, Map4).
+
+    % get size
+    maps:size(Map4).
+    -> 3
+
+    % check type
+    is_map(Map4).
+    -> true
+
+    % check if key exist
+    maps:is_key(a, Map4).
+    -? true
+
+    % create from list
+    maps:from_list([{a,1}, {b,2}, {c,3}]).
+    -> #{a => 1,b => 2,c => 3}
+
+    % convert to list
+    maps:to_list(Map4).
+    -> [{a,100},{b,20},{c,30}]
+
+    % get keys
+    maps:keys(Map4).
+    -> [a,b,c]
+
+    % get values
+    maps:values(Map4).
+    -> [100,20,30]
+
+    % merge two maps
+    maps:merge(
+      maps:from_list([{a,1}, {b,2}, {c,3}]),
+      maps:from_list([{x,4}, {y,5}, {z,6}])
+    ).
+    -> #{a => 1,b => 2,c => 3,x => 4,y => 5,z => 6}
+
+## syntax
+
+maps have native syntax, here are the different operations compared to their equivalent module call.
+
+    % maps:new/1
+    Map1 = #{}.
+    -> #{}
+
+    % maps:put/3
+    Map2 = Map1#{a => 3, b => 5, c => 7}.
+    -> #{a => 3,b => 5,c => 7}
+
+    % maps:update/3
+    Map3 = Map2#{a := 7}.
+    -> #{a => 7,b => 5,c => 7}
+
+    % maps:find/2
+    #{a := Value} = Map3.
+    -> #{a => 7,b => 5,c => 7}
+    Value.
+    -> 7
+
+## pattern matching
+
+    Pets = #{"dog" => "winston", "fish" => "mrs.blub"}.
+    #{"fish" := CatName, "dog" := DogName} = Pets.
+    CatName.
+    -> "mrs.blub"
+    DogName.
+    -> "winston"
+
+while we can expect `1` to be equal to `1.0` (although not *strictly equal*, as with =:=), we can't expect to pattern match by doing `1 = 1.0`.
+
+in the case of maps, this means that `Map1 == Map2` isn't a synonym of `Map1 = Map2`. because Erlang maps respect Erlang sorting order, a map such as `#{1.0 => true}` is going to compare equal to `#{1 => true}`, but you won't be able to match them one against the other.
+
+## maps can be sorted
+
+    lists:sort([
+      #{ 1 => 2, 3 => 4},
+      #{2 => 1}, #{2 => 0, 1 => 4}
+    ]).
+    -> [#{2 => 1},#{1 => 4,2 => 0},#{1 => 2,3 => 4}]
+
+## future
+
+- map comprehensions
+- more syntax
+
+## maps vs records vs dicts
+
+- maps are a replacement for dicts, not records.
+- maps are >18x faster than dicts
+- for the core of your process loop, when you know all keys that should exist, a record would be a smart choice, performance-wise.
+
+why is it we should use maps as dicts and not as records;
+
+Operations|Records|Maps|Dict
+---|---|---|---
+Immutable|✓|✓|✓
+Keys of any type||✓|✓
+Usable with maps/folds||✓|✓
+Content opaque to other modules|✓||
+Has a module to use it||✓|✓
+Supports pattern matching|✓|✓|
+All keys known at compile-time|✓||
+Can merge with other instance||✓|✓
+Testing for presence of a key||✓|✓
+Extract value by key|✓|✓|✓
+Per-key Dialyzer type-checking|✓|*|
+Conversion from/to lists||✓|✓
+Per-element default values|✓||
+Standalone data type at runtime||✓|
+Fast direct-index access|✓||
+
+</details>
 
 ***
 
@@ -2080,7 +2245,12 @@ a recursive function has to terminate to be used in a program. a recursive funct
 # Resources
 
 ## Learning Sources by Order
-- [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.com/)
+- [ ] [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.com/) [**wip**]
+- [ ] [Introducing Erlang](http://shop.oreilly.com/product/0636920025818.do)
+- [ ] [Erlang Programming](http://shop.oreilly.com/product/9780596518189.do)
+- [ ] [Programming Erlang](https://pragprog.com/book/jaerlang2/programming-erlang)
+- [ ] [Erlang and OTP in Action](https://www.manning.com/books/erlang-and-otp-in-action)
+- [ ] [Designing for Scalability with Erlang/OTP](http://shop.oreilly.com/product/0636920024149.do)
 
 ## Tutorials / Presentations
 - [Parque - Designing a Real Time Game Engine in Erlang](https://www.youtube.com/watch?v=sla-t0ZNlMU), [[source code](https://github.com/mrallen1/parque)]
