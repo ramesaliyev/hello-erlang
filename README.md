@@ -2231,7 +2231,6 @@ the extended API mainly adds some introspection power and flexibility: it lets y
 
 ## Okasaki API
 the Okasaki API is a bit weird. it's derived from [Chris Okasaki's Purely Functional Data Structures](https://books.google.ca/books?id=SxPzSTcTalAC&lpg=PP1&dq=chris+okasaki+purely+functional+data+structures&pg=PP1&hl=en#v=onepage&q&f=false). the API provides operations similar to what was available in the two previous APIs, but some of the function names are written backwards and the whole thing is relatively peculiar. unless you do know you want this API, i wouldn't bother with it.
-
 </details>
 
 ***
@@ -2328,6 +2327,20 @@ a recursive function has to terminate to be used in a program. a recursive funct
     -> 2
 
 </details>
+<details>
+  <summary><strong>serial, parallel, sequential, and concurrent</strong></summary><br>
+
+**concurrency** means, essentially, that `task A` and `task B` both need to happen independently of each other.
+
+there are various different ways of accomplishing concurrency. one of them is **parallelism**. having multiple CPUs working on the different tasks at the same time. but that's not the only way. another is by task switching, which works like this: `task A` works up to a certain point, then the CPU working on it stops and switches over to `task B`, works on it for a while, and then switches back to `task A`. if the time slices are small enough, it may appear to the user that both things are being run in `parallel`, even though they're actually being processed in **serial** by a multitasking CPU.
+
+**sequential** in other hand, means, that `task B` depends on the result of previous task, for example `task A`.
+
+concurrent statements can be parallelized but sequential statements cannot be parallelized.
+
+[resource 1](https://softwareengineering.stackexchange.com/questions/190719/the-difference-between-concurrent-and-parallel-execution),
+[resource 2](http://s1l3n0.blogspot.com/2013/04/serial-vs-parallel-sequential-vs.html)
+</details>
 
 ***
 
@@ -2347,6 +2360,8 @@ a recursive function has to terminate to be used in a program. a recursive funct
 ## Links
 - [Official Docs](http://erlang.org/doc/index.html)
 - [Erldocs](https://erldocs.com/)
+- [Standard Library](http://erlang.org/doc/apps/stdlib/index.html)
+- [Extended Library](http://erlang.org/doc/applications.html)
 - [Erlang Resources](https://gist.github.com/macintux/6349828)
 - [Programming Rules and Conventions](http://www.erlang.se/doc/programming_rules.shtml)
 - [Why did Alan Kay dislike Java](https://www.quora.com/Why-did-Alan-Kay-dislike-Java)
