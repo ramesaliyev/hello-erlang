@@ -2233,6 +2233,19 @@ the extended API mainly adds some introspection power and flexibility: it lets y
 the Okasaki API is a bit weird. it's derived from [Chris Okasaki's Purely Functional Data Structures](https://books.google.ca/books?id=SxPzSTcTalAC&lpg=PP1&dq=chris+okasaki+purely+functional+data+structures&pg=PP1&hl=en#v=onepage&q&f=false). the API provides operations similar to what was available in the two previous APIs, but some of the function names are written backwards and the whole thing is relatively peculiar. unless you do know you want this API, i wouldn't bother with it.
 </details>
 
+## concurrency
+<details>
+  <summary><strong>concurrency and parallelism</strong></summary><br>
+
+in the context of Erlang, `concurrency` refers to the idea of **having many actors running independently, but not necessarily all at the same time**. `parallelism` is **having actors running exactly at the same time**. there is not any consensus on such definitions around various areas of computer science, but we will use them in this manner when we talking about erlang.
+
+erlang had **concurrency** from the beginning, even when everything was done on a single core processor in the '80s each Erlang process would have its own slice of time to run. **parallelism** was still possible back then; all you needed to do was to have a second computer running the code and communicating with the first one. then, only two actors could be run in parallel in this setup. nowadays, multi-core systems allows for parallelism on a single computer and Erlang takes full advantage of this possibility.
+
+erlang was only adapted to true **symmetric multiprocessing** in the mid 2000s and only got most of the implementation right with the R13B release of the language in 2009. before that, SMP often had to be disabled to avoid performance losses. to get parallelism on a multicore computer without SMP, you'd start many instances of the VM instead.
+
+an interesting fact is that because Erlang concurrency is all about isolated processes, it took no conceptual change at the language level to bring true parallelism to the language. all the changes were transparently done in the VM, away from the eyes of the programmers.
+</details>
+
 ***
 
 # Definitions
@@ -2338,8 +2351,36 @@ there are various different ways of accomplishing concurrency. one of them is **
 
 concurrent statements can be parallelized but sequential statements cannot be parallelized.
 
-[resource 1](https://softwareengineering.stackexchange.com/questions/190719/the-difference-between-concurrent-and-parallel-execution),
-[resource 2](http://s1l3n0.blogspot.com/2013/04/serial-vs-parallel-sequential-vs.html)
+**resources:**
+- [stackexchange concurrent vs parallel](https://softwareengineering.stackexchange.com/questions/190719/the-difference-between-concurrent-and-parallel-execution)
+- [blogspot serial vs parallel vs concurrent vs sequential](http://s1l3n0.blogspot.com/2013/04/serial-vs-parallel-sequential-vs.html)
+</details>
+<details>
+  <summary><strong>symmetric and asymmetric multiprocessing</strong></summary><br>
+
+![multiprocessing symmetric vs asymmetric](./assets/multiprocessing_symmetric_vs_asymmetric.jpg)
+
+**symmetric multiprocessing** (`SMP`) involves a multiprocessor computer hardware and software architecture where two or more identical processors are connected to a single, shared main memory, have full access to all input and output devices, and are controlled by a single operating system instance that treats all processors equally, reserving none for special purposes. most multiprocessor systems today use an SMP architecture. in the case of multi-core processors, the SMP architecture applies to the cores, treating them as separate processors.
+
+**asymmetric multiprocessing** (`AMP`) system is a multiprocessor computer system where not all of the multiple interconnected central processing units (CPUs) are treated equally. for example, a system might allow (either at the hardware or operating system level) only one CPU to execute operating system code or might allow only one CPU to perform I/O operations. other AMP systems might allow any CPU to execute operating system code and perform I/O operations, so that they were symmetric with regard to processor roles, but attached some or all peripherals to particular CPUs, so that they were asymmetric with respect to the peripheral attachment.
+
+asymmetric multiprocessing was the only method for handling multiple CPUs before symmetric multiprocessing (SMP) was available. it has also been used to provide less expensive options on systems where SMP was available. additionally, AMP is used in applications that are dedicated, such as embedded systems, when individual processors can be dedicated to specific tasks at design time.
+
+basis of comparison | symmetric | asymmetric
+---|---|---
+basic | each processor run the tasks of operating system | only `master` processor run the tasks of operating system
+process | processor takes processes from a common ready queue, or there may be a private ready queue for each processor | master processor assign processes to the slave processors, or they have some predefined processes
+architecture | all processor has the same architecture | all processor may have same or different architecture
+communication | all processors communicate with another processor by a shared memory | processors need not communicate as they are controlled by the master processor
+failure | if a processor fails, the computing capacity of the system reduces | if a master processor fails, a slave is turned to the master processor to continue the execution. if a slave processor fails, its task is switched to other processors
+ease | is complex as all the processors need to be synchronized to maintain the load balance | is simple as master processor access the data structure
+
+**symmetric multiprocessing** has proper **load balancing**, better **fault tolerance** and also reduces the chance of CPU **bottleneck**. it is complex as the memory is shared among all the processors.
+
+**resources:**
+- [wikipedia symmetric multiprocessing](https://en.wikipedia.org/wiki/Symmetric_multiprocessing)
+- [wikipedia asymmetric multiprocessing](https://en.wikipedia.org/wiki/Asymmetric_multiprocessing)
+- [techdifferences symmetric vs asymmetric-multiprocessing](https://techdifferences.com/difference-between-symmetric-and-asymmetric-multiprocessing.html)
 </details>
 
 ***
