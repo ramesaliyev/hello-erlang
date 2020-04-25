@@ -2176,6 +2176,33 @@ Fast direct-index access|✓||
 
 erlang arrays, at the opposite of their imperative counterparts, **are not able to have such things as constant-time insertion or lookup**. because they're usually slower than those in languages which support destructive assignment and that the style of programming done with Erlang doesn't necessary lend itself too well to arrays and matrices, **they are rarely used in practice**.
 </details>
+<details>
+  <summary><strong>sets</strong></summary><br>
+
+`sets` are groups of unique elements that you can compare and operate on: find which elements are in two groups, in none of them, only in one or the other, etc. there are more advanced operations letting you define relations and operate on these relations and much more.
+
+there are 4 main modules to deal with sets in erlang. they are `ordsets`, `sets`, `gb_sets` and `sofs` (sets of sets):
+
+## ordsets
+`ordsets` are implemented as a sorted list. they're mainly useful for small sets, are the slowest kind of set, but they have the simplest and most readable representation of all sets. there are standard functions for them such as `ordsets:new/0`, `ordsets:is_element/2`, `ordsets:add_element/2`, `ordsets:del_element/2`, `ordsets:union/1`, `ordsets:intersection/1`, and a bunch more.
+
+[ordsets](https://erldocs.com/maint/stdlib/ordsets.html) module could be used.
+
+## sets
+`sets` (the module) is implemented on top of a structure really similar to the one used in `dict`. they implement the same interface as `ordsets`, but they're going to scale much better. like dictionaries, they're especially good for read-intensive manipulations, like checking whether some element is part of the set or not.
+
+[sets](https://erldocs.com/maint/stdlib/sets.html) module could be used.
+
+## gb_sets
+`gb_sets` themselves are constructed above a `General Balanced Tree` structure similar to the one used in the `gb_trees` module. `gb_sets` are to sets what `gb_tree` is to `dict`; an implementation that is faster when considering operations different than reading, leaving you with more control. while `gb_sets` implement the same interface as `sets` and `ordsets`, they also add more functions. Like `gb_trees`, you have `smart` vs. `naive` functions, `iterators`, quick access to the `smallest` and `largest` values, etc.
+
+[gb_sets](https://erldocs.com/maint/stdlib/gb_sets.html) module could be used.
+
+## sofs
+sets of sets (`sofs`) are implemented with `sorted lists`, stuck inside a tuple with some metadata. they're the module to use if you want to have full control over relationships between sets, families, enforce set types, etc. they're really what you want if you need mathematics concept rather than *just* groups of unique elements.
+
+[sofs](https://erldocs.com/maint/stdlib/sofs.html) module could be used.
+</details>
 
 ***
 
