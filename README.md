@@ -2213,6 +2213,24 @@ in mathematics, and more specifically in graph theory, a directed graph (or digr
 `directed graphs` in Erlang are implemented as two modules, [digraph](https://erldocs.com/maint/stdlib/digraph.html) and [digraph_utils](https://erldocs.com/maint/stdlib/digraph_utils). the `digraph` module basically allows the construction and modification of a directed graph: manipulating edges and vertices, finding paths and cycles, etc. on the other hand, `digraph_utils` allows you to navigate a graph (postorder, preorder), testing for cycles, arborescences or trees, finding neighbors, and so on.
 
 because directed graphs are closely related to set theory, the `sofs` module contains a few functions letting you convert [families to digraphs](https://erldocs.com/maint/stdlib/sofs.html#family_to_digraph/2) and [digraphs to families](https://erldocs.com/maint/stdlib/sofs.html#digraph_to_family/2).
+</details>
+<details>
+  <summary><strong>queues</strong></summary><br>
+
+the [queue module](https://erldocs.com/maint/stdlib/queue.html) implements a double-ended [FIFO](http://en.wikipedia.org/wiki/FIFO_(computing)) queue.
+
+queue implmented as two lists (in this context, stacks) that allow to both append and prepend elements rapidly.
+
+queue module basically has different functions in a mental separation into 3 interfaces (or APIs) of varying complexity, called `Original API`, `Extended API` and `Okasaki API`:
+
+## Original API
+the original API contains the functions at the base of the queue concept, including: `new/0`, for creating empty queues, `in/2`, for inserting new elements, `out/1`, for removing elements, and then functions to convert to lists, reverse the queue, look if a particular value is part of it, etc.
+
+## Extended API
+the extended API mainly adds some introspection power and flexibility: it lets you do things such as looking at the front of the queue without removing the first element (see `get/1` or `peek/1`), removing elements without caring about them (`drop/1`), etc. these functions are not essential to the concept of queues, but they're still useful in general.
+
+## Okasaki API
+the Okasaki API is a bit weird. it's derived from [Chris Okasaki's Purely Functional Data Structures](https://books.google.ca/books?id=SxPzSTcTalAC&lpg=PP1&dq=chris+okasaki+purely+functional+data+structures&pg=PP1&hl=en#v=onepage&q&f=false). the API provides operations similar to what was available in the two previous APIs, but some of the function names are written backwards and the whole thing is relatively peculiar. unless you do know you want this API, i wouldn't bother with it.
 
 </details>
 
@@ -2332,6 +2350,9 @@ a recursive function has to terminate to be used in a program. a recursive funct
 - [Erlang Resources](https://gist.github.com/macintux/6349828)
 - [Programming Rules and Conventions](http://www.erlang.se/doc/programming_rules.shtml)
 - [Why did Alan Kay dislike Java](https://www.quora.com/Why-did-Alan-Kay-dislike-Java)
+
+## Additional Learning
+- [Purely Functional Data Structures by Chris Okasaki](https://www.amazon.com/Purely-Functional-Structures-Chris-Okasaki-ebook/dp/B00AKE1V04)
 
 ***
 
