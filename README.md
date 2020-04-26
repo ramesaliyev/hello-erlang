@@ -2364,6 +2364,100 @@ shell itself is implemented as a regular process. we can use `self/0` to get the
 
 the pid changes because the process has been restarted.
 </details>
+<details>
+  <summary><strong>message passing</strong></summary><br>
+
+the primitive required to do **message passing** is the operator **`!`**, also known as the *bang symbol*. on the left-hand side it takes a `pid` and on the right-hand side it takes `any Erlang term`. the term is then sent to the process represented by the `pid`, which can access it:
+
+    self() ! hello.
+    -> hello
+
+the message has been put in the `process' mailbox`, but **it hasn't been read yet**. the second `hello` shown here is the **return value of the send operation**. this means it is possible to send the same message to many processes by doing:
+
+    self() ! self() ! double.
+    -> double
+
+messages are kept in the order that they were received in the process' mailbox. every time a message is read it is taken out of the mailbox.
+
+to see the contents of the current mailbox, you can use the `flush()` command.
+
+    flush().
+    -> Shell got hello
+    -> Shell got double
+    -> Shell got double
+    -> ok
+
+this function is just a shortcut that outputs received messages.
+
+**to read messages** we need `receive` statement. receive is syntactically similar to `case ... of`. in fact, the patterns work exactly the same way except they bind variables coming from messages rather than the expression between `case` and `of`. `receive`s can also have guards.
+
+    receive
+      Pattern1 when Guard1 -> Expr1;
+      Pattern2 when Guard2 -> Expr2;
+      Pattern3 -> Expr3
+    end
+
+> **see [dolphins.erl](./code/concurrency/dolphins.erl)**
+
+    % spawn/3 takes the module, function and its arguments as its own arguments.
+    Dolphin = spawn(dolphins, dolphin1, []).
+    -> <0.95.0>
+
+    Dolphin ! "oh, hello dolphin!".
+    -> Heh, we're smarter than you humans.
+    -> "oh, hello dolphin!"
+
+    Dolphin ! fish.
+    -> fish
+
+after the first message we sent, it worked and output the message. after this our function terminated and so did the process. because of this the second provoked no reaction whatsoever from the process `<0.95.0>`. we'll need to restart the dolphin.
+
+    Dolphin1 = spawn(dolphins, dolphin1, []).
+    -> <0.99.0>
+
+    Dolphin1 ! fish.
+    -> So long and thanks for all the fish!
+    -> fish
+
+    % it terminates again.
+
+to be able to receive a reply from the process, the process will need to know who to reply to. for this we need to pass the pid of caller in the message. in Erlang terms, this is done by packaging a process' pid in a tuple such as `{Pid, Message}`.
+
+    Dolphin2 = spawn(dolphins, dolphin2, []).
+    -> <0.107.0>
+
+    Dolphin2 ! {self(), do_a_flip}.
+    -> {<0.83.0>,do_a_flip}
+
+    flush().
+    -> Shell got "How about no?"
+    -> ok
+
+and lastly, to avoid starting a new process for each call, we're gonna use recursion.
+
+    Dolphin3 = spawn(dolphins, dolphin3, []).
+    -> <0.122.0>
+
+    Dolphin3 ! Dolphin3 ! {self(), do_a_flip}.
+    -> {<0.119.0>,do_a_flip}
+
+    flush().
+    -> Shell got "How about no?"
+    -> Shell got "How about no?"
+    -> ok
+
+    Dolphin3 ! {self(), unknown_message}.
+    -> Heh, we're smarter than you humans.
+    -> {<0.119.0>,unknown_message}
+
+    Dolphin3 ! Dolphin3 ! {self(), fish}.
+    -> {<0.119.0>,fish}
+
+    flush().
+    -> Shell got "So long and thanks for all the fish!"
+    -> ok
+
+</details>
 
 ***
 
