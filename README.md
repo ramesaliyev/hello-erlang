@@ -2237,6 +2237,8 @@ the Okasaki API is a bit weird. it's derived from [Chris Okasaki's Purely Functi
 <details>
   <summary><strong>concurrency and parallelism</strong></summary><br>
 
+erlang's concurrency was based on message passing and the actor model.
+
 in the context of Erlang, `concurrency` refers to the idea of **having many actors running independently, but not necessarily all at the same time**. `parallelism` is **having actors running exactly at the same time**. there is not any consensus on such definitions around various areas of computer science, but we will use them in this manner when we talking about erlang.
 
 erlang had **concurrency** from the beginning, even when everything was done on a single core processor in the '80s each Erlang process would have its own slice of time to run. **parallelism** was still possible back then; all you needed to do was to have a second computer running the code and communicating with the first one. then, only two actors could be run in parallel in this setup. nowadays, multi-core systems allows for parallelism on a single computer and Erlang takes full advantage of this possibility.
@@ -2299,9 +2301,68 @@ a generalisation of this principle is called **Amdahl's Law**. it indicates how 
 according to Amdahl's law, code that is **50%** parallel **can never get faster than twice** what it was before, and code that is **95%** parallel can theoretically be expected to be about **20 times faster** if you add enough processors. what's interesting to see on this graph is how getting rid of the last few sequential parts of a program allows a relatively huge theoretical speedup compared to removing as much sequential code in a program that is not very parallel to begin with.
 
 parallelism is not the answer to every problem. in some cases, going parallel will even slow down your application. this can happen whenever your program is 100% sequential, but still uses multiple processes. in this case, disabling symmetric multiprocessing (`$ erl -smp disable`) might be a good idea.
+</details>
+<details>
+  <summary><strong>spawn()</strong></summary><br>
 
+primitives required for concurrency in Erlang: **spawning new processes**, **sending messages**, and **receiving messages**.
 
+what a process really is? it's in fact **nothing but a function**. it runs a function and once it's done, it disappears. technically, a process also has some hidden state.
 
+to start a new process, Erlang provides the function `spawn/1`, which takes a single function and runs it.
+
+    F = fun() -> 2 + 2 end.
+
+    spawn(F).
+    -> <0.717.0>
+
+the result of `spawn/1` (**`<0.717.0>`**) is called a **`Process Identifier`**, often just written **`PID`**, **`Pid`**, or **`pid`**. pid is an arbitrary value representing any process that exists (or might have existed) at some point in the VM's life. it is used as an address to communicate with the process.
+
+we can't see the result of the function `F`. we only get its pid. that's because processes do not return anything.
+
+for experimenting we can output the result of function with `io:format`. later we gonna use `message passing` to get results of processes.
+
+    spawn(fun() -> io:format("~p~n",[2 + 2]) end).
+    -> 4
+    -> <0.719.0>
+
+lets start 10 processes and pause each of them for a while with the help of the function `timer:sleep/1`, which takes an integer value `N` and waits for `N` milliseconds before resuming code. after the delay, the value present in the process is output.
+
+    G = fun(X) -> timer:sleep(10), io:format("~p~n", [X]) end.
+
+    [spawn(fun() -> G(X) end) || X <- lists:seq(1,10)].
+
+    -> [<0.722.0>,<0.723.0>,<0.724.0>,<0.725.0>,<0.726.0>,
+        <0.727.0>,<0.728.0>,<0.729.0>,<0.730.0>,<0.731.0>]
+    -> 1
+    -> 8
+    -> 2
+    -> 4
+    -> 3
+    -> 5
+    -> 6
+    -> 7
+    -> 9
+    -> 10
+
+because the processes are running at the same time, the ordering of events isn't guaranteed. welcome to parallelism.
+
+> you can start the Erlang VM with disabled symmetric multiprocessing by `$ erl +S 1` command. to see if smp is activated check `explanations of emulator info statements` under shell topic.
+</details>
+<details>
+  <summary><strong>self()</strong></summary><br>
+shell itself is implemented as a regular process. we can use `self/0` to get the pid of the current process.
+
+    self().
+    -> <0.79.0>
+
+    exit(self()).
+    -> ** exception exit: <0.79.0>
+
+    self().
+    -> <0.83.0>
+
+the pid changes because the process has been restarted.
 </details>
 
 ***
@@ -2510,6 +2571,10 @@ officially: "a semaphore restricts the number of simultaneous users of a shared 
     brew install erlang
 #### run shell to test it
     erl
+
+# Shell
+see [explanations of emulator info statements](https://stackoverflow.com/a/1185490).
+
 #### using shell
   - expressions have to be terminated with a period followed by whitespace (line break, a space etc.), otherwise they won't be executed
   - `help().` print help
