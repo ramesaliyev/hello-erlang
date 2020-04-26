@@ -2282,6 +2282,25 @@ well it turns out the choice of asynchronous message passing was a good design p
 erlang implementers keep control of optimization and reliability. nowadays, Erlang's processes take about 300 words of memory each and can be created in a matter of microseconds.
 
 to handle all these potential processes your programs could create, the VM starts one thread per core which acts as a scheduler. each of these schedulers has a run queue, or a list of Erlang processes on which to spend a slice of time. when one of the schedulers has too many tasks in its run queue, some are migrated to another one. this is to say each Erlang VM takes care of doing all the load-balancing and the programmer doesn't need to worry about it. there are some other optimizations that are done, such as limiting the rate at which messages can be sent on overloaded processes in order to regulate and distribute the load.
+</details>
+<details>
+  <summary><strong>vs linear scaling</strong></summary><br>
+
+your program should go twice as fast if you add a second core, four times faster if there are 4 more and so on, right? it depends. such a phenomenon is named **linear scaling** in relation to speed gain vs. the number of cores or processors. in real life, most of the time, this is not the case.
+
+problems that scale very well are often said to be *embarrassingly parallel*. erlang's embarrassingly parallel problems are present at a higher level. usually, they have to do with concepts such as chat servers, phone switches, web servers, message queues, web crawlers or any other application where the work done can be represented as independent logical entities (actors, anyone?). this kind of problem can be solved efficiently with close-to-linear scaling.
+
+many problems will never show such scaling properties. in fact, you only need one centralized sequence of operations to lose it all. **your parallel program only goes as fast as its slowest sequential part**. an example of that phenomenon is observable any time you go to a mall. hundreds of people can be shopping at once, rarely interfering with each other. then once it's time to pay, queues form as soon as there are fewer cashiers than there are customers ready to leave.
+
+a generalisation of this principle is called **Amdahl's Law**. it indicates how much of a speedup you can expect your system to have whenever you add parallelism to it, and in what proportion:
+
+![amdahls law](./assets/amdahls_law.png)
+
+according to Amdahl's law, code that is **50%** parallel **can never get faster than twice** what it was before, and code that is **95%** parallel can theoretically be expected to be about **20 times faster** if you add enough processors. what's interesting to see on this graph is how getting rid of the last few sequential parts of a program allows a relatively huge theoretical speedup compared to removing as much sequential code in a program that is not very parallel to begin with.
+
+parallelism is not the answer to every problem. in some cases, going parallel will even slow down your application. this can happen whenever your program is 100% sequential, but still uses multiple processes. in this case, disabling symmetric multiprocessing (`$ erl -smp disable`) might be a good idea.
+
+
 
 </details>
 
