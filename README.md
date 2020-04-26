@@ -2245,6 +2245,45 @@ erlang was only adapted to true **symmetric multiprocessing** in the mid 2000s a
 
 an interesting fact is that because Erlang concurrency is all about isolated processes, it took no conceptual change at the language level to bring true parallelism to the language. all the changes were transparently done in the VM, away from the eyes of the programmers.
 </details>
+<details>
+  <summary><strong>concepts of concurrency</strong></summary><br>
+
+## scalability
+**scalability** is the property of a system to handle a growing amount of work by adding resources to the system.
+
+an ideal system would support processes doing small computations, switching between them very quickly as events came through. to make it efficient, it made sense for processes to be started very quickly, to be destroyed very quickly and to be able to switch them really fast. having them lightweight was mandatory to achieve this. it was also mandatory because you didn't want to have things like process pools (a fixed amount of processes you split the work between.) Instead, it would be much easier to design programs that could use as many processes as they need.
+
+another important aspect of scalability is to be able to bypass your hardware's limitations. either by make the hardware better, or add more hardware. latter method is where distribution can be useful to have as a part of your language.
+
+it was decided that the cleanest way to do things (scalability and reliability) was to forbid processes from sharing memory. shared memory could leave things in an inconsistent state after some crashes (especially on data shared across different nodes) and had some complications. instead, processes should communicate by sending messages where all the data is copied. this would risk being slower, but safer.
+
+## fault-tolerance
+
+**fault-tolerance** is the property that enables a system to continue operating properly in the event of the failure of (or one or more faults within) some of its components.
+
+the first writers of Erlang always kept in mind that failure is common. you can try to prevent bugs all you want, but most of the time some of them will still happen. in the eventuality bugs don't happen, nothing can stop hardware failures all the time. **the idea is thus to find good ways to handle errors and problems rather than trying to prevent them all**.
+
+some studies proved that **the main sources of downtime in large scale software systems are intermittent or transient bugs**. then, there's a principle that says that errors which corrupt data should cause the faulty part of the system to die as fast as possible in order to avoid propagating errors and bad data to the rest of the system.
+
+another concept here is that there exist many different ways for a system to terminate, two of which are **clean shutdowns and crashes**.
+
+worst case is obviously the crash. a safe solution would be to **make sure all crashes are the same as clean shutdowns**: this can be done through practices such as **shared-nothing** and single assignment (which isolates a process' memory), **avoiding locks** (a lock could happen to not be unlocked during a crash, keeping other processes from accessing the data or leaving data in an inconsistent state) and other stuff dont covered here, **but were all part of Erlang's design**.
+
+your ideal solution in Erlang is thus to **kill processes as fast as possible to avoid data corruption and transient bugs**. further error handling mechanisms are also part of the language to allow processes to monitor other processes (which are described in the Errors and Processes chapter), in order to know when processes die and to decide what to do about it.
+
+another advantage of independent processes with no communication channel outside message passing is dealing with hardware failures. you can have them working the same way whether they're local or on a different computer, making fault tolerance through distribution nearly transparent to the programmer.
+
+being distributed has direct consequences on how processes can communicate with each other. one of the biggest hurdles of distribution is that you can't assume that because a node (a remote computer) was there when you made a function call, it will still be there for the whole transmission of the call or that it will even execute it correctly. someone tripping over a cable or unplugging the machine would leave your application hanging. Or maybe it would make it crash.
+
+well it turns out the choice of asynchronous message passing was a good design pick there too. under the **processes-with-asynchronous-messages** model, messages are sent from one process to a second one and stored in a **mailbox** inside the receiving process until they are taken out to be read. it's important to mention that messages are sent without even checking if the receiving process exists or not because it would not be useful to do so. as implied in the previous paragraph, it's impossible to know if a process will crash between the time a message is sent and received. and if it's received, it's impossible to know if it will be acted upon or again if the receiving process will die before that. asynchronous messages allow safe remote function calls because there is no assumption about what will happen; the programmer is the one to know. if you need to have a confirmation of delivery, you have to send a second message as a reply to the original process. this message will have the same safe semantics, and so will any program or library you build on this principle.
+
+## implementation
+
+erlang implementers keep control of optimization and reliability. nowadays, Erlang's processes take about 300 words of memory each and can be created in a matter of microseconds.
+
+to handle all these potential processes your programs could create, the VM starts one thread per core which acts as a scheduler. each of these schedulers has a run queue, or a list of Erlang processes on which to spend a slice of time. when one of the schedulers has too many tasks in its run queue, some are migrated to another one. this is to say each Erlang VM takes care of doing all the load-balancing and the programmer doesn't need to worry about it. there are some other optimizations that are done, such as limiting the rate at which messages can be sent on overloaded processes in order to regulate and distribute the load.
+
+</details>
 
 ***
 
@@ -2381,6 +2420,41 @@ ease | is complex as all the processors need to be synchronized to maintain the 
 - [wikipedia symmetric multiprocessing](https://en.wikipedia.org/wiki/Symmetric_multiprocessing)
 - [wikipedia asymmetric multiprocessing](https://en.wikipedia.org/wiki/Asymmetric_multiprocessing)
 - [techdifferences symmetric vs asymmetric-multiprocessing](https://techdifferences.com/difference-between-symmetric-and-asymmetric-multiprocessing.html)
+</details>
+<details>
+  <summary><strong>scalability, fault-tolerance</strong></summary><br>
+
+**scalability** is the property of a system to handle a growing amount of work by adding resources to the system.
+
+**fault-tolerance** is the property that enables a system to continue operating properly in the event of the failure of (or one or more faults within) some of its components.
+</details>
+<details>
+  <summary><strong>lock, mutex, and semaphore</strong></summary><br>
+
+a **lock** allows only one thread to enter the part that's locked and the lock is not shared with any other processes.
+
+a **mutex** is the same as a lock but it can be system wide (shared by multiple processes).
+
+a **semaphore** does the same as a mutex but allows x number of threads to enter, this can be used for example to limit the number of cpu, io or ram intensive tasks running at the same time.
+
+[resource](https://stackoverflow.com/questions/2332765/lock-mutex-semaphore-whats-the-difference)
+
+## mutex vs semaphore (the toilet example)
+
+**mutex:**<br>
+is a key to a toilet. one person can have the key - occupy the toilet - at the time. when finished, the person gives (frees) the key to the next person in the queue.
+
+officially: "mutexes are typically used to serialise access to a section of re-entrant code that cannot be executed concurrently by more than one thread. a mutex object only allows one thread into a controlled section, forcing other threads which attempt to gain access to that section to wait until the first thread has exited from that section." *ref: Symbian Developer Library*
+
+*(A mutex is really a semaphore with value 1.)*
+
+**semaphore:**<br>
+is the number of free identical toilet keys. example, say we have four toilets with identical locks and keys. the semaphore count - the count of keys - is set to 4 at beginning (all four toilets are free), then the count value is decremented as people are coming in. if all toilets are full, ie. there are no free keys left, the semaphore count is 0. now, when eq. one person leaves the toilet, semaphore is increased to 1 (one free key), and given to the next person in the queue.
+
+officially: "a semaphore restricts the number of simultaneous users of a shared resource up to a maximum number. threads can request access to the resource (decrementing the semaphore), and can signal that they have finished using the resource (incrementing the semaphore)." *Ref: Symbian Developer Library*
+
+[resource](http://niclasw.mbnet.fi/MutexSemaphore.html), [mirror](https://stackoverflow.com/questions/62814/difference-between-binary-semaphore-and-mutex/346678#346678)
+
 </details>
 
 ***
