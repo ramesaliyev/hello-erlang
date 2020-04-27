@@ -2456,6 +2456,30 @@ and lastly, to avoid starting a new process for each call, we're gonna use recur
     flush().
     -> Shell got "So long and thanks for all the fish!"
     -> ok
+</details>
+<details>
+  <summary><strong>state</strong></summary><br>
+
+> **see [kitchen.erl](./code/concurrency/kitchen.erl)**
+
+    Fridge = spawn(kitchen, fridge2, [[baking_soda]]).
+    -> <0.139.0>
+
+    Fridge ! {self(), {store, milk}}.
+    -> {<0.119.0>,{store,milk}}
+
+    flush().
+    -> Shell got {<0.139.0>,ok}
+    -> ok
+
+    Fridge ! {self(), {store, bacon}}.
+    Fridge ! {self(), {take, bacon}}.
+    Fridge ! {self(), {take, turkey}}.
+    flush().
+    -> Shell got {<0.139.0>,ok}
+    -> Shell got {<0.139.0>,{ok,bacon}}
+    -> Shell got {<0.139.0>,not_found}
+    -> ok
 
 </details>
 
