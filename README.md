@@ -580,6 +580,8 @@ a function macro example
     % usage
     ?sub(23,47).
 
+`?MODULE` is a macro returning the current module's name.
+
 ## comments
 comments are single-line only and begin with a `%` sign (using `%%` is purely a question of style.)
 
@@ -2462,7 +2464,7 @@ and lastly, to avoid starting a new process for each call, we're gonna use recur
 
 > **see [kitchen.erl](./code/concurrency/kitchen.erl)**
 
-    Fridge = spawn(kitchen, fridge2, [[baking_soda]]).
+    Fridge = spawn(kitchen, fridge, [[baking_soda]]).
     -> <0.139.0>
 
     Fridge ! {self(), {store, milk}}.
@@ -2480,7 +2482,39 @@ and lastly, to avoid starting a new process for each call, we're gonna use recur
     -> Shell got {<0.139.0>,{ok,bacon}}
     -> Shell got {<0.139.0>,not_found}
     -> ok
+</details>
+<details>
+  <summary><strong>abstracting details</strong></summary><br>
 
+> **see [kitchen.erl](./code/concurrency/kitchen.erl)**
+
+lets use abstracted way to send messages;
+
+    Fridge = spawn(kitchen, fridge, [[baking_soda]]).
+
+    kitchen:store(Fridge, water).
+    -> ok
+
+    kitchen:take(Fridge, water).
+    -> {ok,water}
+
+    kitchen:take(Fridge, juice).
+    -> not_found
+
+> **note:** this part may be a little confusing at first. we're calling a function (`kitchen:store`) and then receiving messages that passed to our shell proccess within this function's `receive` block. this is because shell is a process after all, and what we are doing in shell is actually calling another function. so we calling a function from a function. and that inner function, there is a receive block. this is why our process stops and waits for messages, and receives them inside receive block of `store` function.
+
+> another thing to note here is that we first send the message and after that start waiting for the response. this is possible because of the fact that even when we're not in receive mode, erlang still keeps messages that sended to a process if that process is alive. and process is get them from mailbox when it switchs to receive mode.
+
+lets abstract everything;
+
+    Fridge2 = kitchen:start([rhubarb, dog, hotdog]).
+    -> <0.161.0>
+
+    kitchen:take(Fridge2, dog).
+    -> {ok,dog}
+
+    kitchen:take(Fridge2, dog).
+    -> not_found
 </details>
 
 ***
