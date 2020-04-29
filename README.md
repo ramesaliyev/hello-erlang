@@ -2,7 +2,7 @@
 These are notes and quotes i take about Erlang in my learning process.<br>
 Check [resources](#resources) section to see my learning sources.
 
-*first make it work, then make it beautiful, and only if you need to, make it fast.*
+![first make it work, then make it beautiful, and only if you need to, make it fast.](./assets/joe_armstrong_make_it_beautiful.jpeg)
 
 ***
 
@@ -2516,6 +2516,42 @@ lets abstract everything;
     kitchen:take(Fridge2, dog).
     -> not_found
 </details>
+<details>
+  <summary><strong>timeout</strong></summary><br>
+
+    receive
+      Match -> Expression1
+    after Delay ->
+      Expression2
+    end.
+
+the `after` part will be triggered if as much time as `Delay` (an integer representing milliseconds) has been spent without receiving a message that matches the `Match` pattern. when this happens, `Expression2` is executed.
+
+> **see [kitchen.erl](./code/concurrency/kitchen.erl)**
+
+    kitchen:take(pid(0,250,0), dog).
+    ... 3 sec delay ...
+    -> timeout
+
+`Delay` can also be the atom `infinity`, which will cause the receive wait forever. this can be useful when function takes `Delay` as argument and we want it to wait forever.
+
+> **see [multiproc.erl](./code/concurrency/multiproc.erl)**
+
+there are uses to such timers other than giving up after too long. for example thats how `timer:sleep/1` is implemented.
+
+    multiproc:sleep(1000).
+    ... 1 sec delay ...
+    -> ok
+
+no message will ever be matched in the `receive` part of the construct because there is no pattern. instead, the `after` part of the construct will be called once the delay `T` has passed.
+
+another special case is when the timeout is at `0`:
+
+    multiproc:flush().
+    -> ok
+
+erlang VM will try and find a message that fits one of the available patterns. (in the case above, anything matches.) as long as there are messages, the `flush/0` function will recursively call itself until the mailbox is empty. once this is done, the `after 0 -> ok` part of the code is executed and the function returns.
+</details>
 
 ***
 
@@ -2693,7 +2729,7 @@ officially: "a semaphore restricts the number of simultaneous users of a shared 
 
 # Resources
 
-## Learning Sources by Order
+## Primary Learning Sources by Order
 - [ ] [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.com/) [**wip**]
 - [ ] [Introducing Erlang](http://shop.oreilly.com/product/0636920025818.do)
 - [ ] [Erlang Programming](http://shop.oreilly.com/product/9780596518189.do)
@@ -2703,18 +2739,22 @@ officially: "a semaphore restricts the number of simultaneous users of a shared 
 
 ## Tutorials / Presentations
 - [Parque - Designing a Real Time Game Engine in Erlang](https://www.youtube.com/watch?v=sla-t0ZNlMU), [[source code](https://github.com/mrallen1/parque)]
+- [An Evening at Erlang Factory: Joe Armstrong, Mike Williams, Robert Virding](https://www.youtube.com/watch?v=rYkI0_ixRDc)
 
-## Links
+## Learning Sources of Related Topics
+- [Purely Functional Data Structures by Chris Okasaki](https://www.amazon.com/Purely-Functional-Structures-Chris-Okasaki-ebook/dp/B00AKE1V04)
+
+## References
 - [Official Docs](http://erlang.org/doc/index.html)
 - [Erldocs](https://erldocs.com/)
 - [Standard Library](http://erlang.org/doc/apps/stdlib/index.html)
 - [Extended Library](http://erlang.org/doc/applications.html)
 - [Erlang Resources](https://gist.github.com/macintux/6349828)
 - [Programming Rules and Conventions](http://www.erlang.se/doc/programming_rules.shtml)
-- [Why did Alan Kay dislike Java](https://www.quora.com/Why-did-Alan-Kay-dislike-Java)
 
-## Additional Learning
-- [Purely Functional Data Structures by Chris Okasaki](https://www.amazon.com/Purely-Functional-Structures-Chris-Okasaki-ebook/dp/B00AKE1V04)
+## Must See
+- [Erlang: The Movie](https://www.youtube.com/watch?v=BXmOlCy0oBM)
+- [Why did Alan Kay dislike Java](https://www.quora.com/Why-did-Alan-Kay-dislike-Java)
 
 ***
 
@@ -2745,6 +2785,10 @@ see [explanations of emulator info statements](https://stackoverflow.com/a/11854
     - `rl(Name)` or `rl([Names])` to restrict it to specific records
   - `rp(Term)` convert a tuple to a record (given the definition exists)
   - `ctrl+g` abort menu
+    - `h` list commands
+    - `k <n>` kill the job
+    - `s` create new shell
+    - `c <n>` connect to job
   - `ctrl+a` go to beginning of line
   - `ctrl+e` go to end of line
   - `tab` complete
