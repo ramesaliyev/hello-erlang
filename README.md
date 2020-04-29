@@ -1,6 +1,7 @@
 # Hello Erlang!
 These are notes and quotes i take about Erlang in my learning process.<br>
-Check [resources](#resources) section to see my learning sources.
+Check [resources](#resources) section to see my learning sources.<br>
+Note that this repo is always a *work in progress*.
 
 ![first make it work, then make it beautiful, and only if you need to, make it fast.](./assets/joe_armstrong_make_it_beautiful.jpeg)
 
@@ -2367,7 +2368,7 @@ shell itself is implemented as a regular process. we can use `self/0` to get the
 the pid changes because the process has been restarted.
 </details>
 <details>
-  <summary><strong>message passing</strong></summary><br>
+  <summary><strong>message passing and receiving</strong></summary><br>
 
 the primitive required to do **message passing** is the operator **`!`**, also known as the *bang symbol*. on the left-hand side it takes a `pid` and on the right-hand side it takes `any Erlang term`. the term is then sent to the process represented by the `pid`, which can access it:
 
@@ -2458,6 +2459,8 @@ and lastly, to avoid starting a new process for each call, we're gonna use recur
     flush().
     -> Shell got "So long and thanks for all the fish!"
     -> ok
+
+**note** when messages are sent to a `process`, they're stored in the `mailbox` until the process reads them and they **match a pattern** there. the messages are stored in the order they were received. this means every time you match a message, it begins by the `oldest` one. that oldest message is then tried against every pattern of the receive until one of them matches. when it does, the message is removed from the mailbox and the code for the process executes normally until the next `receive`.
 </details>
 <details>
   <summary><strong>state</strong></summary><br>
@@ -2551,6 +2554,66 @@ another special case is when the timeout is at `0`:
     -> ok
 
 erlang VM will try and find a message that fits one of the available patterns. (in the case above, anything matches.) as long as there are messages, the `flush/0` function will recursively call itself until the mailbox is empty. once this is done, the `after 0 -> ok` part of the code is executed and the function returns.
+</details>
+<details>
+  <summary><strong>selective receives</strong></summary><br>
+
+`flushing` concept (see timeout chapter above) makes it possible to implement a **selective receive** which can give a **`priority`** to the messages you receive by `nesting calls`.
+
+> **see [multiproc.erl](./code/concurrency/multiproc.erl)**
+
+    multiproc:send_lots_of_messages_to_self().
+
+    % get only important ones
+    multiproc:importants().
+    -> [high,high,high,high]
+
+    % get only normal ones
+    multiproc:normal().
+    -> [low,low,low,low]
+
+    % no messages left
+    multiproc:importants().
+    -> []
+    multiproc:normal().
+    -> []
+
+    multiproc:send_lots_of_messages_to_self().
+
+    % get all messages but make importants came first.
+    multiproc:importants_first().
+    -> [high,high,high,high,low,low,low,low]
+
+
+**but there is an unsafe thing here.**
+
+remember that when messages are sent to a `process`, they're stored in the `mailbox` until the process reads them and they **match a pattern** there. the messages are stored in the order they were received. this means every time you match a message, it begins by the `oldest` one. that oldest message is then tried against **every pattern** of the `receive` until one of them matches. when it does, the message is removed from the mailbox and the code for the process executes normally until the next `receive`. when this next `receive` is evaluated, the `VM` will look for the oldest message currently in the mailbox (the one after the one we removed), and so on.
+
+when there is no way to match a given message, it is put in a `save queue` and the next message is tried. if the second message matches, the first message is put back on top of the `mailbox` to be retried later.
+
+the problem here is that if your process has a lot of messages you never care about, reading useful messages will actually take longer and longer (and the processes will grow in size too).
+
+this kind of receive is a frequent cause of performance problems in Erlang. a standard way to take a defensive measure against useless messages polluting a process' mailbox might look like this:
+
+    receive
+      Pattern1 -> Expression1;
+      ...
+      PatternN -> ExpressionN;
+      Unexpected ->
+        io:format("unexpected message ~p~n", [Unexpected])
+    end.
+
+the `Unexpected` variable will match anything, take the unexpected message out of the mailbox and show a warning.
+
+if you really need to work with a priority in your messages, a smarter way to do it would be to implement a `min-heap` or use the `gb_trees`.
+
+## make_ref
+
+a new optimization has been added to Erlang's compiler. it simplifies selective receives in very specific cases of back-and-forth communications between processes.
+
+> see `optimized/1` in [multiproc.erl](./code/concurrency/multiproc.erl)
+
+to make it work, a `reference` (`make_ref()`) has to be created in a function and then sent in a message. in the same function, a selective receive is then made. if no message can match unless it contains the same reference, the compiler automatically makes sure the **VM will skip messages received before the creation of that reference**.
 </details>
 
 ***
@@ -2722,7 +2785,11 @@ is the number of free identical toilet keys. example, say we have four toilets w
 officially: "a semaphore restricts the number of simultaneous users of a shared resource up to a maximum number. threads can request access to the resource (decrementing the semaphore), and can signal that they have finished using the resource (incrementing the semaphore)." *Ref: Symbian Developer Library*
 
 [resource](http://niclasw.mbnet.fi/MutexSemaphore.html), [mirror](https://stackoverflow.com/questions/62814/difference-between-binary-semaphore-and-mutex/346678#346678)
+</details>
+<details>
+  <summary><strong>idiomatic code</strong></summary><br>
 
+**idiomatic code** means following the conventions of the language. you should find the easiest and most common ways of accomplishing a task rather than porting your knowledge from a different language.
 </details>
 
 ***
