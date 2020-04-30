@@ -2615,10 +2615,122 @@ a new optimization has been added to Erlang's compiler. it simplifies selective 
 
 to make it work, a `reference` (`make_ref()`) has to be created in a function and then sent in a message. in the same function, a selective receive is then made. if no message can match unless it contains the same reference, the compiler automatically makes sure the **VM will skip messages received before the creation of that reference**.
 </details>
+<details>
+  <summary><strong>links</strong></summary><br>
+
+a `link` is a specific kind of relationship that can be created between two processes. when that relationship is set up and one of the processes dies from an unexpected throw, error or exit, the other linked process also dies.
+
+this is a useful concept from the perspective of **failing as soon as possible to stop errors**: if the process that has an error crashes but those that depend on it don't, then all these depending processes now have to deal with a dependency disappearing. letting them die and then restarting the whole group is usually an acceptable alternative. links let us do exactly this.
+
+> **see [linkmon.erl](./code/concurrency/linkmon.erl)**
+
+to set a link between two processes, use `link/1`, which takes a `pid` as an argument. when called, the function will create a link **between the `current process` and the one identified by `pid`**. to get rid of a link, use `unlink/1`.
+
+when one of the linked processes crashes, a special kind of message (`{'EXIT', FromPid, Reason}`) is sent, with information relative to what happened. no such message is sent if the process dies of natural causes. (eg: process is done running its functions.)
+
+    spawn(fun linkmon:myproc/0).
+    -> <0.311.0>
+    ... nothing happens ...
+
+    link(spawn(fun linkmon:myproc/0)).
+    -> true
+    ... after 5 seconds ...
+    -> ** exception error: reason
+    ... shell crashes ...
+
+links are used to establish larger groups of processes that should all die together. here are processes linked together, dying as each of their successors exits:
+
+    link(spawn(linkmon, chain, [3])).
+    -> true
+    ... after 2 second ...
+    -> ** exception error: "chain dies here"
+    ... shell crashes ...
+
+`chain` function will take an integer `N`, start N processes linked one to the other. in order to be able to pass the `N-1` argument to the next **chain** process (which calls spawn/1), i wrap the call inside an anonymous function so it doesn't need arguments anymore. calling `spawn(?MODULE, chain, [N-1])` would have done a similar job.
+
+    [shell] == [3] == [2] == [1] == [0]
+    [shell] == [3] == [2] == [1] == *dead*
+    [shell] == [3] == [2] == *dead*
+    [shell] == [3] == *dead*
+    [shell] == *dead*
+    *dead, error message shown*
+    [shell] <-- restarted
+
+after the process running `linkmon:chain(0)` dies, the error is propagated down the chain of links until the shell process itself dies because of it. the crash could have happened in any of the linked processes; because links are `bidirectional`, you only need one of them to die for the others to follow suit.
+
+**notes**:<br>
+- use `exit/2` to kill another process from the shell, `exit(Pid, Reason)`
+- links can not be stacked. multiple calls to `link/1` for the same two processes, will only create one link between them and a single call to `unlink/1` will be enough to tear it down.
+
+## spawn_link
+
+note that `link(spawn(Function))` or `link(spawn(M,F,A))` happens in more than one step. in some cases, it is possible for a process to die before the link has been set up and then provoke unexpected behavior. for this reason, the function `spawn_link/1-3` has been added to the language. it takes the same arguments as `spawn/1-3`, creates a process and links it as if `link/1` had been there, except it's all done as an atomic operation (*the operations are combined as a single one, which can either fail or succeed, but nothing else*). this is generally considered safer and you save a set of parentheses too.
+
+</details>
+
 
 ***
 
 # Definitions
+<details>
+  <summary><strong>imparative, declarative, procedural, functional</strong></summary><br>
+
+for all programming paradigms see [wikipedia](https://en.wikipedia.org/wiki/Programming_paradigm). also see [comparison between paradigms](https://en.wikipedia.org/wiki/Comparison_of_programming_paradigms).
+
+## imperative programming
+
+**imperative programming** is a programming paradigm that uses statements that change a program's state. in much the same way that the imperative mood (imperative mood is a grammatical mood that forms a command or request.) in natural languages expresses commands, an imperative program consists of commands for the computer to perform. imperative programming focuses on describing **`how`** a program operates.
+
+### structured programming
+
+**structured programming** is a programming paradigm aimed at improving the clarity, quality, and development time of a computer program by making extensive use of the structured control flow constructs of selection (`if`/`then`/`else`) and repetition (`while` and `for`), `block structures`, and `subroutines`.
+
+    % unstructured basic %
+
+    10 DIM I
+    20 LET I = 0
+    30 PRINT "HELLO"
+    40 LET I = I + 1
+    50 IF I < 10 THEN GOTO 30 END IF
+
+    % structured basic %
+
+    DIM I
+    FOR I = 0 TO 9
+      PRINT "HELLO"
+    NEXT
+
+### procedural programming
+
+**procedural programming** is a programming paradigm, derived from `structured programming`, based on the concept of the `procedure call`. `procedures`, also known as `routines`, `subroutines`, or `functions`, simply contain a series of computational steps to be carried out. any given procedure might be called at any point during a program's execution, including by other procedures or itself.
+
+## declarative programming
+
+**declarative programming** is a programming paradigm—a style of building the structure and elements of computer programs—that **`expresses the logic of a computation`** without describing its control flow.
+
+### functional programming
+
+**functional programming** is a programming paradigm where programs are constructed by `applying` and `composing` functions. it is a `declarative programming` paradigm in which function definitions are `trees of expressions` that each return a value, rather than a sequence of imperative statements which change the state of the program or world.
+
+in functional programming, functions are treated as `first-class citizens`, meaning that they can be bound to names (including local identifiers), passed as arguments, and returned from other functions, just as any other data type can. this allows programs to be written in a declarative and composable style, where small functions are combined in a modular manner.
+
+functional programming is sometimes treated as synonymous with **purely functional programming**, a subset of functional programming which treats all functions as `deterministic mathematical functions`, or `pure functions`. when a pure function is called with some given arguments, it will always return the same result, and cannot be affected by any mutable state or other side effects. this is in contrast with impure procedures, common in imperative programming, which can have side effects (such as modifying the program's state or taking input from a user). proponents of purely functional programming claim that by restricting side effects, programs can have fewer bugs, be easier to debug and test, and be more suited to formal verification.
+
+functional programming has its roots in academia, evolving from the lambda calculus, a formal system of computation based only on functions. functional programming has historically been less popular than imperative programming, but many functional languages are seeing use today in industry and education, including `Common Lisp`, `Scheme`, `Clojure`, `Wolfram Language`, `Racket`, `Erlang` `OCaml`, `Haskell`, and `F#`.
+
+functional programming is also key to some languages that have found success in specific domains, like `R` in statistics, `J`, `K` and `Q` in financial analysis, and `XQuery`/`XSLT` for `XML`. `domain-specific` declarative languages like `SQL` and `Lex`/`Yacc` use some elements of functional programming, such as **not allowing mutable values**. in addition, many other programming languages support programming in a functional style or have implemented features from functional programming, such as `Perl`, `PHP`, `C++11`, `Kotlin`, and `Scala`.
+
+## versus
+
+## imparative vs procedural
+
+**imperative programming** means that the computer get a list of commands and executes them in order, when **procedural programming** (which is also imperative) allows splitting those instructions into procedures (or functions).
+
+## declarative vs functional
+
+in practice, these two concepts tend to align, but it is entirely possible to write `an expression involving composition of pure functions that describe an explicit process to perform a computation` (**functional, but not declarative**), and it is possible to write `sequential, impure, code that describes constraints on an intended result rather than a process for obtaining it` (**declarative, but not functional**).
+
+</details>
 <details>
   <summary><strong>referential transparency</strong></summary><br>
 
