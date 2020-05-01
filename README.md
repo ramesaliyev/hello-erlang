@@ -2665,9 +2665,203 @@ after the process running `linkmon:chain(0)` dies, the error is propagated down 
 ## spawn_link
 
 note that `link(spawn(Function))` or `link(spawn(M,F,A))` happens in more than one step. in some cases, it is possible for a process to die before the link has been set up and then provoke unexpected behavior. for this reason, the function `spawn_link/1-3` has been added to the language. it takes the same arguments as `spawn/1-3`, creates a process and links it as if `link/1` had been there, except it's all done as an atomic operation (*the operations are combined as a single one, which can either fail or succeed, but nothing else*). this is generally considered safer and you save a set of parentheses too.
+</details>
+<details>
+  <summary><strong>traps</strong></summary><br>
+
+`error propagation` across processes is done through a process similar to `message passing`, but with a special type of message called `signals`. `exit signals` are **`secret`** messages that automatically act on processes, killing them in the action.
+
+in order to be reliable, an application needs to be able to both **kill and restart** a process quickly. `links` are alright to do the killing part. for restarting part, `traps` will be used.
+
+> **see [linkmon.erl](./code/concurrency/linkmon.erl)**
+
+in order to restart a process, first we need a way to know that it died. this can be done by adding a layer on top of links with a concept called `system processes`. system processes are basically normal processes, except **they can convert `exit signals` to `regular messages`**. this is done by calling `process_flag(trap_exit, true)` in a running process.
+
+    % trap process
+    process_flag(trap_exit, true).
+    -> false
+
+    % spawn & link
+    spawn_link(fun() -> linkmon:chain(3) end).
+    -> <0.363.0>
+
+    % receive exit signal as regular message.
+    receive X -> X end.
+    -> {'EXIT',<0.363.0>,"chain dies here"}
+
+    % note that if you try again this example in shell,
+    % receive will not catch anything, because
+    % X is bound and wont match new messages.
+
+what happens;
+
+    [shell] == [3] == [2] == [1] == [0]
+    [shell] == [3] == [2] == [1] == *dead*
+    [shell] == [3] == [2] == *dead*
+    [shell] == [3] == *dead*
+    [shell] <-- {'EXIT,Pid,"chain dies here"} -- *dead*
+    [shell] <-- still alive!
+
+this is the mechanism allowing for a quick restart of processes. by writing programs using system processes, it is easy to create a process whose only role is to check if something dies and then restart it whenever it fails.
+
+## behavior of errors
+
+### usual exceptions
+
+**`spawn_link(fun() -> ok end)`**<br>
+the process exited normally, without a problem.
+
+    % untrapped
+    ... nothing ...
+
+    % trapped
+    -> {'EXIT', <0.61.0>, normal}
+
+> note that this looks a bit like the result of `catch exit(normal)`, except a `PID` is added to the tuple to know what processed failed.
+<br>
+
+**`spawn_link(fun() -> exit(reason) end)`**<br>
+the process has terminated for a custom reason.
+
+    % untrapped
+    -> ** exception exit: reason
+
+    % trapped
+    -> {'EXIT', <0.55.0>, reason}
+
+in this case, if there is no trapped exit, the process crashes. otherwise, you get the above message.
+<br><br>
+
+**`spawn_link(fun() -> exit(normal) end)`**<br>
+this successfully emulates a process terminating normally.
+
+    % untrapped
+    -> ... nothing ...
+
+    % trapped
+    -> {'EXIT', <0.58.0>, normal}
+
+in some cases, you might want to kill a process as part of the normal flow of a program, without anything exceptional going on. this is the way to do it.
+<br><br>
+
+**`spawn_link(fun() -> 1/0 end)`**<br>
+the error (`{badarith, Reason}`) is never caught by a `try ... catch` block and bubbles up into an `'EXIT'`.
+
+    % untrapped
+    -> Error in process <0.44.0> with exit value: {badarith, [{erlang, '/', [1,0]}]}
+
+    % trapped
+    -> {'EXIT', <0.52.0>, {badarith, [{erlang, '/', [1,0]}]}}
+
+at this point, it behaves exactly the same as `exit(reason)` did, but with a stack trace giving more details about what happened.
+<br><br>
+
+**`spawn_link(fun() -> erlang:error(reason) end)`**<br>
+pretty much the same as with `1/0`. that's normal, `erlang:error/1` is meant to allow you to do just that.
+
+    % untrapped
+    -> Error in process <0.47.0> with exit value: {reason, [{erlang, apply, 2}]}
+
+    % trapped
+    -> {'EXIT', <0.74.0>, {reason, [{erlang, apply, 2}]}}
+
+<br>
+
+**`spawn_link(fun() -> throw(rocks) end)`**<br>
+because the `throw` is never caught by a `try ... catch`, it bubbles up into an `error`, which in turn bubbles up into an `EXIT`.
+
+    % untrapped
+    -> Error in process <0.51.0> with exit value: {{nocatch, rocks}, [{erlang, apply, 2}]}
+
+    % trapped
+    -> {'EXIT', <0.79.0>, {{nocatch, rocks}, [{erlang, apply, 2}]}}
+
+without trapping exit, the process fails. otherwise it deals with it fine.
+<br><br>
+
+### exit/2
+
+`exit/2` is the Erlang process equivalent of a gun. **it allows a process to kill another one from a distance**, safely. here are some of the possible calls:
+
+<br>
+
+**`exit(self(), normal)`**<br>
+when trapping not exits, `exit(self(), normal)` acts the same as `exit(normal)`. otherwise, you receive a message with the same format you would have had by listening to links from foreign processes dying.
+
+    % untrapped
+    -> ** exception exit: normal
+
+    % trapped
+    -> {'EXIT', <0.31.0>, normal}
+
+<br>
+
+**`exit(spawn_link(fun() -> timer:sleep(50000) end), normal)`**<br>
+this basically is a call to `exit(Pid, normal)`. this command doesn't do anything useful, **because a process can not be remotely killed with the reason normal as an argument**.
+
+    % untrapped
+    -> ... nothing ...
+
+    % trapped
+    -> ... nothing ...
+
+<br>
+
+**`exit(spawn_link(fun() -> timer:sleep(50000) end), reason)`**<br>
+this is the foreign process terminating for `reason` itself. looks the same as if the foreign process called `exit(reason)` on itself.
+
+    % untrapped
+    -> ** exception exit: reason
+
+    % trapped
+    -> {'EXIT', <0.52.0>, reason}
+
+<br>
+
+### kill
+
+**`exit(spawn_link(fun() -> timer:sleep(50000) end), kill)`**<br>
+surprisingly, the message gets changed from the dying process to the spawner. the spawner now receives `killed` instead of `kill`. that's because **`kill` is a special exit signal**.
+
+    % untrapped
+    -> ** exception exit: killed
+
+    % trapped
+    -> {'EXIT', <0.58.0>, killed}
+
+<br>
+
+**`exit(self(), kill)`**<br>
+`kill` is actually impossible to trap.
+
+    % untrapped
+    -> ** exception exit: killed
+
+    % trapped
+    -> ** exception exit: killed
+
+<br>
+
+**`spawn_link(fun() -> exit(kill) end)`**<br>
+that's getting confusing. when another process kills itself with `exit(kill)` and we don't trap exits, our own process dies with the reason killed. however, when we trap exits, things don't happen that way.
+
+    % untrapped
+    -> ** exception exit: killed
+
+    % trapped
+    -> {'EXIT', <0.67.0>, kill}
+
+<br>
+
+**explanation of `kill`**<br>
+
+there are situations where you might want to **brutally murder a process**: maybe one of them is trapping exits but is also stuck in an infinite loop, never reading any message. the `kill` reason acts as a *special signal* that **can't be trapped**. this ensures any process you terminate with it will really be dead. usually, kill is a bit of a last resort, when everything else has failed.
+
+as the `kill` reason can never be trapped, it needs to be changed to `killed` when other processes receive the message. otherwise every other process linked to it would die for the same kill reason and would kill its neighbors, and so on.
+
+this also explains why `exit(kill)` looks like `killed` when received from another linked process (**the signal is modified so it doesn't cascade**), but still looks like `kill` when trapped locally (because its already trapped).
 
 </details>
-
 
 ***
 
@@ -2911,8 +3105,8 @@ officially: "a semaphore restricts the number of simultaneous users of a shared 
 ## Primary Learning Sources by Order
 - [ ] [Learn You Some Erlang for Great Good!](https://learnyousomeerlang.com/) [**wip**]
 - [ ] [Introducing Erlang](http://shop.oreilly.com/product/0636920025818.do)
-- [ ] [Erlang Programming](http://shop.oreilly.com/product/9780596518189.do)
 - [ ] [Programming Erlang](https://pragprog.com/book/jaerlang2/programming-erlang)
+- [ ] [Erlang Programming](http://shop.oreilly.com/product/9780596518189.do)
 - [ ] [Erlang and OTP in Action](https://www.manning.com/books/erlang-and-otp-in-action)
 - [ ] [Designing for Scalability with Erlang/OTP](http://shop.oreilly.com/product/0636920024149.do)
 
