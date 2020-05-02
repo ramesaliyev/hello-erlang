@@ -2860,7 +2860,63 @@ there are situations where you might want to **brutally murder a process**: mayb
 as the `kill` reason can never be trapped, it needs to be changed to `killed` when other processes receive the message. otherwise every other process linked to it would die for the same kill reason and would kill its neighbors, and so on.
 
 this also explains why `exit(kill)` looks like `killed` when received from another linked process (**the signal is modified so it doesn't cascade**), but still looks like `kill` when trapped locally (because its already trapped).
+</details>
+<details>
+  <summary><strong>monitors</strong></summary><br>
 
+monitors are a special type of link with two differences:
+- they are **unidirectional**
+- they **can be stacked**
+
+monitors are what you want when a process wants **to know what's going on with a second process**, but neither of them really are vital to each other.
+
+the function to set up a monitor is `erlang:monitor/2`. first argument is the atom `process` and the second one is the `pid`:
+
+    erlang:monitor(process, spawn(fun() -> timer:sleep(500) end)).
+    -> #Ref<0.2910505066.96206849.180693>
+
+    flush().
+    -> Shell got {'DOWN',#Ref<0.2910505066.96206849.180693>,process,<0.580.0>,normal}
+    -> ok
+
+every time a process you monitor goes down, you will receive a message in format `{'DOWN', MonitorReference, process, Pid, Reason}`. `reference` can be used to `demonitor` the process.
+
+as with links, there is an atomic function to spawn a process while monitoring it, `spawn_monitor/1-3`.
+
+    {Pid, Ref} = spawn_monitor(fun() -> receive _ -> exit(boom) end end).
+    -> {<0.583.0>,#Ref<0.2910505066.96206849.180704>}
+
+    erlang:demonitor(Ref).
+    -> true
+
+    Pid ! die.
+    -> die
+
+    flush().
+    -> ok
+
+function `demonitor/2` also exists and gives a little bit more information. the second parameter can be a list of options. only two exist, `info` and `flush`:
+
+    {Pid, Ref} = spawn_monitor(fun() -> receive _ -> exit(boom) end end).
+    -> {<0.589.0>,#Ref<0.2910505066.96206849.180726>}
+
+    Pid ! die.
+    -> die
+
+    erlang:demonitor(Ref, [flush, info]).
+    -> false
+
+    flush().
+    -> ok
+
+the `info` option tells you if a monitor existed or not when you tried to remove it. this is why the demonitoring expression returned `false`. using `flush` as an option will remove the `DOWN` message from the mailbox if it existed, resulting in `flush()` finding nothing in the current process' mailbox.
+</details>
+<details>
+  <summary><strong>links vs monitors</strong></summary><br>
+
+**`links`** are more of an organizational construct. when you design the architecture of your application, you determine which process will do which jobs, and what will depend on what. some processes will supervise others, some couldn't live without a twin process, etc. this structure is usually something fixed, known in advance. links are useful for that and should not necessarily be used outside of it.
+
+but what if you have 2 or 3 different libraries that you call and they all need to know whether a process is alive or not? if you were to use `links` for this, you would quickly hit a problem whenever you needed to `unlink` a process. now, **links aren't stackable**, so the moment you `unlink` one, you `unlink` them all and mess up all the assumptions put up by the other libraries. that's pretty bad. so you need *stackable links*, and **`monitors`** are your solution. they can be removed individually. plus, being `unidirectional` is handy in libraries because other processes shouldn't have to be aware of said libraries.
 </details>
 
 ***
