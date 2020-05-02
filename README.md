@@ -16,6 +16,7 @@ Note that this repo is always a *work in progress*.
 - erlang doesn't allow default arguments in functions
 - erlang is built on the notion that a failure in one of the components should not affect the whole system
 - every erlang term can be compared to any other
+- erlang is a non-pure functional language, there are side effects, like registering process names.
 </details>
 
 ## basic data types
@@ -2918,6 +2919,81 @@ the `info` option tells you if a monitor existed or not when you tried to remove
 
 but what if you have 2 or 3 different libraries that you call and they all need to know whether a process is alive or not? if you were to use `links` for this, you would quickly hit a problem whenever you needed to `unlink` a process. now, **links aren't stackable**, so the moment you `unlink` one, you `unlink` them all and mess up all the assumptions put up by the other libraries. that's pretty bad. so you need *stackable links*, and **`monitors`** are your solution. they can be removed individually. plus, being `unidirectional` is handy in libraries because other processes shouldn't have to be aware of said libraries.
 </details>
+<details>
+  <summary><strong>naming processes</strong></summary><br>
+
+> **see [linkmon.erl](./code/concurrency/linkmon.erl)**
+
+    Critic = linkmon:start_critic().
+    -> <0.599.0>
+
+    linkmon:judge(Critic, "Genesis", "The Lambda Lies Down on Broadway").
+    -> "They are terrible!"
+
+    % because of a solar storm the connection is dropped:
+    exit(Critic, solar_storm).
+    -> true
+
+    % there is no judge left.
+    linkmon:judge(Critic, "Genesis", "A trick of the Tail Recursion").
+    -> timeout
+
+we can no longer get criticism for the albums. to keep the critic alive, we  wrote a basic **`supervisor`** process (`restarter`) whose only role is to restart it when it goes down.
+
+the `restarter` will be its own process. it will in turn start the critic's process and if it ever dies of abnormal cause, `restarter/0` will loop and create a new critic. note that we added a clause for `{'EXIT', Pid, shutdown}` as a way to manually kill the critic if we ever need to.
+
+problem with this approach (*restarter first approach*) is that there is no way to find the `Pid` of the critic, and thus we can't call him to have his opinion. one of the solutions Erlang has to solve this is to give **`names`** to processes.
+
+the act of giving a name to a process allows you to replace the unpredictable `pid` by an `atom`. this atom can then be used exactly as a `Pid` when sending messages. to give a process a name, the function **`erlang:register/2`** is used. if the process dies, it will automatically lose its name or you can also use **`unregister/1`** to do it manually. you can get a list of all registered processes with **`registered/0`** or a more detailed one with the shell command `regs()`.
+
+> note that registering is a side effect. and this makes erlang non-pure functional language.
+
+in the `judge2/2` (*restarter second approach*) function the line **`Pid = whereis(critic)`** is used to find the critic's `pid` in order to pattern match against it in the receive expression. this can be the source of a problem though. code assumes that the critic's pid will remain the same between the first two lines of the function. However, it is completely plausible the following will happen:
+
+    1. critic ! Message
+                          2. critic receives
+                          3. critic replies
+                          4. critic dies
+    5. whereis fails
+                          6. critic is restarted
+    7. code crashes
+
+or
+
+    1. critic ! Message
+                              2. critic receives
+                              3. critic replies
+                              4. critic dies
+                              5. critic is restarted
+    6. whereis picks up
+        wrong pid
+    7. message never matches
+
+the possibility that things go wrong in a different process can make another one go wrong if we don't do things right. in this case, the value of the `critic` atom can be seen from *multiple processes*. this is known as **shared state**. the problem here is that **the value of `critic` can be accessed and modified by different processes at virtually the same time**, resulting in inconsistent information and software errors. the common term for such things is a **race condition**. race conditions are particularly dangerous because they depend on the timing of events. in pretty much every `concurrent` and `parallel` language out there, this timing depends on unpredictable factors such as how busy the processor is, where the processes go, and what data is being processed by your program.
+
+fixing the issue of the *restarter second approach* is relatively easy if we don't assume the named process remains the same.
+
+on *restarter third approach*, we'll use `references` (created with `make_ref()`) as unique values to identify messages. we'll need to rewrite the `critic` and `judge` functions.
+
+    linkmon:start_critic3().
+    -> <0.628.0>
+
+    linkmon:judge3("The Doors", "Light my Firewall").
+    -> "They are terrible!"
+
+    % find and kill the process
+    exit(whereis(critic3), kill).
+    -> true
+
+    % a new one will be respawned.
+    whereis(critic3).
+    -> <0.633.0>
+
+    linkmon:judge3("Rage Against the Turing Machine", "Unit Testify").
+    -> "They are great!"
+
+**note:** atoms can be used in a limited (though high) number, therefore you shouldn't ever create dynamic atoms. this means naming processes should be reserved to important services **unique to an instance of the VM** and **processes that should be there for the whole time your application runs**. if you need named processes but they are *transient* or there isn't any of them which can be *unique to the VM*, it may mean they need to be represented as **a group instead**. **linking and restarting them together if they crash** might be the sane option, rather than trying to use dynamic names.
+</details>
 
 ***
 
@@ -3213,6 +3289,7 @@ see [explanations of emulator info statements](https://stackoverflow.com/a/11854
   - `rl()` print all record definitions
     - `rl(Name)` or `rl([Names])` to restrict it to specific records
   - `rp(Term)` convert a tuple to a record (given the definition exists)
+  - `regs()` get a list of all registered processes
   - `ctrl+g` abort menu
     - `h` list commands
     - `k <n>` kill the job
