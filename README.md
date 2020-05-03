@@ -1,6 +1,6 @@
 # Hello Erlang!
-These are notes and quotes i take about Erlang in my learning process.<br>
-Check [resources](#resources) section to see my learning sources.<br>
+These are notes and mostly quotes i take about Erlang in my learning process.<br>
+Check [resources](#resources) section to see where I take quotes from.<br>
 Note that this repo is always a *work in progress*.
 
 ![first make it work, then make it beautiful, and only if you need to, make it fast.](./assets/joe_armstrong_make_it_beautiful.jpeg)
@@ -17,6 +17,11 @@ Note that this repo is always a *work in progress*.
 - erlang is built on the notion that a failure in one of the components should not affect the whole system
 - every erlang term can be compared to any other
 - erlang is a non-pure functional language, there are side effects, like registering process names.
+</details>
+<details>
+  <summary><strong>sayings</strong></summary><br>
+
+- walking on water and developing software from a specification are easy if both are frozen.
 </details>
 
 ## basic data types
@@ -3242,7 +3247,7 @@ officially: "a semaphore restricts the number of simultaneous users of a shared 
 - [ ] [Erlang and OTP in Action](https://www.manning.com/books/erlang-and-otp-in-action)
 - [ ] [Designing for Scalability with Erlang/OTP](http://shop.oreilly.com/product/0636920024149.do)
 
-## Tutorials / Presentations
+## Tutorials / Presentations / Talks
 - [Parque - Designing a Real Time Game Engine in Erlang](https://www.youtube.com/watch?v=sla-t0ZNlMU), [[source code](https://github.com/mrallen1/parque)]
 - [An Evening at Erlang Factory: Joe Armstrong, Mike Williams, Robert Virding](https://www.youtube.com/watch?v=rYkI0_ixRDc)
 

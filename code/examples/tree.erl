@@ -19,6 +19,12 @@ insert(NewKey, NewVal, {node, {Key, Val, Smaller, Larger}}) when NewKey > Key ->
 insert(Key, Val, {node, {Key, _, Smaller, Larger}}) ->
   {node, {Key, Val, Smaller, Larger}}.
 
+%% note here that the function returns a completely new tree.
+%% this is typical of functional languages having only single assignment.
+%% while this can be seen as inefficient, most of the underlying
+%% structures of two versions of a tree sometimes happen to be
+%% the same and are thus shared, copied by the VM only when needed.
+
 %% look for key in a Tree
 lookup(_, {node, 'nil'}) ->
   undefined;
