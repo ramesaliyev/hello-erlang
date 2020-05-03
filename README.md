@@ -16,12 +16,13 @@ Note that this repo is always a *work in progress*.
 - erlang doesn't allow default arguments in functions
 - erlang is built on the notion that a failure in one of the components should not affect the whole system
 - every erlang term can be compared to any other
-- erlang is a non-pure functional language, there are side effects, like registering process names.
+- erlang is a functional but not a pure functional language, there are side effects, like registering process names.
 </details>
 <details>
   <summary><strong>sayings</strong></summary><br>
 
-- walking on water and developing software from a specification are easy if both are frozen.
+- Walking on water and developing software from a specification are easy if both are frozen. - *Edward V. Berard*
+- Some people, when confronted with a problem, think “I know, I’ll use regular expressions." Now they have two problems. - *Jamie Zawinski*
 </details>
 
 ## basic data types
@@ -2560,6 +2561,8 @@ another special case is when the timeout is at `0`:
     -> ok
 
 erlang VM will try and find a message that fits one of the available patterns. (in the case above, anything matches.) as long as there are messages, the `flush/0` function will recursively call itself until the mailbox is empty. once this is done, the `after 0 -> ok` part of the code is executed and the function returns.
+
+note that Erlang's timeout value is **limited to about 50 days in milliseconds**.
 </details>
 <details>
   <summary><strong>selective receives</strong></summary><br>
@@ -3000,6 +3003,300 @@ on *restarter third approach*, we'll use `references` (created with `make_ref()`
 **note:** atoms can be used in a limited (though high) number, therefore you shouldn't ever create dynamic atoms. this means naming processes should be reserved to important services **unique to an instance of the VM** and **processes that should be there for the whole time your application runs**. if you need named processes but they are *transient* or there isn't any of them which can be *unique to the VM*, it may mean they need to be represented as **a group instead**. **linking and restarting them together if they crash** might be the sane option, rather than trying to use dynamic names.
 </details>
 
+## real project
+
+<details>
+  <summary><strong>directory structure</strong></summary><br>
+
+> for examples see [projects](./code/projects)
+
+    % standard
+
+    ebin/
+    include/
+    priv/
+    src/
+
+    % optional
+
+    conf/
+    doc/
+    lib/
+
+**`ebin/`**
+- where files will go once they are compiled.
+
+**`include/`**
+- is used to store `.hrl` files that are to be included by other applications
+
+**`priv/`**
+- used for executables that might have to interact with Erlang, such as specific drivers.
+
+**`src/`**
+- all `.erl` files stay here
+- private `.hrl` files are also kept here
+
+**`conf/`**
+- can be added for specific configuration files
+
+**`doc/`**
+- for documentation
+
+**`lib/`**
+- for third party libraries required for your application to run
+
+</details>
+<details>
+  <summary><strong>code hot-loading</strong></summary><br>
+
+in order to do `hot code loading`, Erlang has a thing called the **`code server`**. the code server is basically a `VM` process in charge of an [ETS](https://erldocs.com/maint/stdlib/ets.html) table (*in-memory database table, native to the VM*.) the code server can hold **two** versions of a single module in memory, and **both versions can run at once**. a new version of a module is automatically loaded when compiling it with `c(Module)`, loading with `l(Module)` or loading it with one of the many functions of the [code module](http://erldocs.com/maint/kernel/code.html).
+
+a concept to understand is that Erlang has both `local` and `external calls`. **local calls are those function calls you can make with functions that might not be exported**. they're just of the format **`Atom(Args)`**. on the other hand, **an external call can only be done with exported functions** and has the form **`Module:Function(Args)`**.
+
+when there are two versions of a module loaded in the VM, all local calls are done through the currently running version in a process. however, external calls are always done on the newest version of the code available in the code server. then, if local calls are made from within the external one, they are in the new version of the code.
+
+![hot code loving](./assets/hot_code_loading.png)
+
+given that every process/actor in Erlang needs to do a recursive call in order to change its state, it is possible to load entirely new versions of an actor by having an external recursive call.
+
+**note**: if you load a `third version` of a module while a process still runs with the `first` one, **that process gets killed by the VM**, which assumes it was an **orphan process without a supervisor or a way to upgrade itself**. if nobody runs the oldest version, it is simply dropped and the newest ones are kept instead.
+
+there are ways to bind yourself to a system module that will send messages whenever a new version of a module is loaded. by doing this, you can trigger a module reload only when receiving such a message, and always do it with a code upgrade function, say `MyModule:Upgrade(CurrentState)`, which will then be able to **transform the state data structure according to the new version's specification**. this `subscription` handling is done automatically by the `OTP Framework` btw (we'll see it when we'll use OTP). see a generic example below;
+
+    -module(hotload).
+    -export([server/1, upgrade/1]).
+
+    server(State) ->
+      receive
+        update ->
+          NewState = ?MODULE:upgrade(State),
+          ?MODULE:server(NewState);  %% loop in the new version of the module
+        SomeMessage ->
+          %% do something here
+          server(State)  %% stay in the same version no matter what.
+      end.
+
+    upgrade(OldState) ->
+      %% transform and return the state here.
+
+</details>
+<details>
+  <summary><strong>makefiles</strong></summary><br>
+
+> for examples see [projects](./code/projects)
+
+open a file named **`Emakefile`** and put it in the project's **base** directory. the file contains Erlang terms and gives the Erlang compiler the recipe to cook wonderful and crispy `.beam` files:
+
+    {'src/*', [debug_info,
+           {i, "src"},
+           {i, "include"},
+           {outdir, "ebin"}]}.
+
+this tells the compiler to add `debug_info` to the files (this is rarely an option you want to give up), to look for files in the `src/` and `include/` directory and to output them in `ebin/`.
+
+now in your command line;
+
+    erl -make
+
+the files should all be compiled and put inside the `ebin/` directory for you. now start the Erlang shell with following command;
+
+    erl -pa ebin/.
+
+the `-pa <directory>` option tells the Erlang VM to add that path to the places it can look in for modules.
+
+another option is to start the shell as usual and call `make:all([load])`. this will look for a file named `Emakefile` in the current directory, recompile it (if it changed) and load the new files.
+
+</details>
+
+***
+
+# Projects
+
+<details>
+  <summary><strong>remainder</strong></summary><br>
+
+> for full explanation see [tutorial](https://learnyousomeerlang.com/designing-a-concurrent-application) and for complete code see [remainder](./code/projects/remainder)
+
+we're going to make a remainder app which consist of three type of pieces. `client`, `server` and `events`. using one process per event to be reminded of is likely going to be overkill and hard to scale in a real world application. however, for an application you are going to be the sole user of, this is good enough. a different approach could be using functions such as `timer:send_after/2-3` to avoid spawning too many processes.
+
+**overall communication diagram;**
+
+![overall communication diagram](./assets/project_reminder/overall_arhitecture.png)
+
+**and message details;**
+
+subscribe to events;<br>
+![subscribe to events diagram](./assets/project_reminder/message_subscribe.png)
+
+<br>add new event;<br>
+![add new event diagram](./assets/project_reminder/message_add_event.png)
+
+<br>cancel a new event (client to server);<br>
+![cancel a new event from client diagram](./assets/project_reminder/message_cancel_event_client.png)
+
+<br>event is done (server to client);<br>
+![event is done from server diagram](./assets/project_reminder/message_event_done_server.png)
+
+<br>shutdown server;<br>
+![shutdown server diagram](./assets/project_reminder/message_shutdown.png)
+
+<br>event is done (event to server);<br>
+![event is done diagram](./assets/project_reminder/message_event_done.png)
+
+<br>cancel a event (server to event);<br>
+![event is done diagram](./assets/project_reminder/message_cancel_event.png)
+
+<br>code change;<br>
+![code change diagram](./assets/project_reminder/code_change.png)
+
+> **note that** for this application, we are not using the `code server` and using instead use a custom `code_change` message from the shell, doing very basic reloading.
+
+**testing event process**:
+
+    event:start("Event", 0).
+    -> <0.682.0>
+
+    flush().
+    -> Shell got {done,"Event"}
+    -> ok
+
+    TheEvent = event:start("Event", 500).
+    -> <0.689.0>
+
+    event:cancel(TheEvent).
+    -> ok
+
+    % or use standard Erlang's datetime format
+    % ({{Year, Month, Day}, {Hour, Minute, Second}})
+
+    TheEvent2 = event:start("Event2", {{2020,5,3}, {22,25,0}}).
+    -> <0.740.0>
+
+    flush().
+    -> ok
+    ... in a minute ...
+    flush().
+    -> Shell got {done,"Event2"}
+
+**testing event server**:
+
+    % make sure `event` module is also compiled.
+
+    evserv:start_link().
+    -> <0.802.0>
+
+    evserv:subscribe(self()).
+    -> {ok,#Ref<0.2910505066.96206849.182092>}
+
+    FutureDate = {{2020, 5, 4}, {22,59,0}}.
+    -> {{2020,5,4},{22,59,0}}
+
+    evserv:add_event("Test1", "Hi!", FutureDate).
+    -> ok
+
+    evserv:add_event("Test2", "Bye!", FutureDate).
+    -> ok
+
+    evserv:listen(5).
+    ... waits 5 seconds for messages ...
+    ... nothing ...
+
+    evserv:cancel("Test1").
+    -> ok
+
+    evserv:listen(2000).
+    ... waits until a message is received ...
+    ... after a delay ...
+    -> [{done,"Test2","Bye!"}]
+
+    % lets kill event server
+    -> ** exception exit: die
+
+    % we cant use it anymore
+
+    evserv:add_event("Test1", "Hi!", FutureDate).
+    -> ** exception error: bad argument
+          in function  evserv:add_event/3 (code/projects/remainder/src/evserv.erl, line 122)
+
+    % there is no event server
+
+    whereis(evserv).
+    -> undefined
+
+**using with supervisor**:
+
+    % we just gonna start event server
+    % with our generic supervisor
+
+    Sup1 = sup:start(evserv, []).
+    -> <0.81.0>
+
+    % rest is same
+
+    evserv:subscribe(self()).
+    evserv:add_event("TestSup", "Hi!", {{2020, 5, 4}, {23,24,0}}).
+    evserv:listen(2000).
+    ... after a delay ...
+    -> [{done,"TestSup","Hi!"}]
+
+    % but this time if event server die somehow
+
+    exit(whereis(evserv), die).
+    -> Process <0.82.0> exited for reason die
+    -> true
+
+    % it will respawn by supervisor
+
+    whereis(evserv).
+    -> <0.88.0>
+
+    is_process_alive(whereis(evserv)).
+    -> true
+
+    % we still can use it,
+    % but the state and all event processes are gone.
+
+    evserv:subscribe(self()).
+    evserv:add_event("Resurrected", "Hi!", {{2020, 5, 4}, {23,37,0}}).
+    evserv:listen(2000).
+    ... after a delay ...
+    -> [{done,"Resurrected","Hi!"}]
+
+    % but supervisor will respect exits with `shutdown` reason
+    % and will not respawn its child.
+    exit(whereis(evserv), shutdown).
+    -> true
+
+    % no more event server
+    whereis(evserv).
+    -> undefined
+
+    % and no more supervisor
+    is_process_alive(Sup1).
+    -> false
+
+    % or send shutdown to supervisor itself;
+
+    Sup2 = sup:start(evserv, []).
+    -> <0.108.0>
+
+    whereis(evserv).
+    -> <0.109.0>
+
+    exit(Sup2, shutdown).
+    -> true
+
+    % again no more event server
+
+    whereis(evserv).
+    -> undefined
+
+    % and no more supervisor
+    is_process_alive(Sup2).
+    -> false
+
+</details>
+
 ***
 
 # Definitions
@@ -3261,6 +3558,7 @@ officially: "a semaphore restricts the number of simultaneous users of a shared 
 - [Extended Library](http://erlang.org/doc/applications.html)
 - [Erlang Resources](https://gist.github.com/macintux/6349828)
 - [Programming Rules and Conventions](http://www.erlang.se/doc/programming_rules.shtml)
+- [OTP Design Principles](http://erlang.org/doc/design_principles/users_guide.html)
 
 ## Must See
 - [Erlang: The Movie](https://www.youtube.com/watch?v=BXmOlCy0oBM)
