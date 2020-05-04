@@ -3107,6 +3107,20 @@ the `-pa <directory>` option tells the Erlang VM to add that path to the places 
 another option is to start the shell as usual and call `make:all([load])`. this will look for a file named `Emakefile` in the current directory, recompile it (if it changed) and load the new files.
 
 </details>
+<details>
+  <summary><strong>namespaces</strong></summary><br>
+
+yeah, there is no namespaces.
+
+the common pattern is to prefix every module name with the name of your project. or add a module, named after the application itself, which wraps common calls that programmers could use when using their own application, such as starting the application with a supervisor, subscribing to the server, adding and cancelling events, etc.
+
+erlang has a flat module structure (there is no hierarchy), It is frequent for some applications to enter in conflict. you can test for any clashes with the function `code:clash/0`.
+
+    code:clash().
+    -> ** Found 0 name clashes in code paths
+    -> ok
+
+</details>
 
 ***
 
@@ -3294,6 +3308,8 @@ subscribe to events;<br>
     % and no more supervisor
     is_process_alive(Sup2).
     -> false
+
+to make our application `clash free` modules should be renamed to `reminder_evserv`, `reminder_sup` and `reminder_event`.
 
 </details>
 
