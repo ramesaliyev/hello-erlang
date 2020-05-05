@@ -3122,6 +3122,22 @@ erlang has a flat module structure (there is no hierarchy), It is frequent for s
 
 </details>
 
+## otp
+
+<details>
+  <summary><strong>what is otp</strong></summary><br>
+
+OTP stands for **Open Telecom Platform**.
+
+in short, OTP is a collection of useful middleware, libraries, and tools written in the Erlang.
+
+the OTP framework takes care of common practices on how to write concurrent applications with the languages' built-in facilities by grouping essential practices into a set of libraries that have been carefully engineered and battle-hardened over years.
+
+the OTP framework is also a set of modules and standards designed to help you build applications.
+
+erlang is a general-purpose programming language with built-in support for concurrency, distribution and fault tolerance. OTP (Open Telecom Platform) is aimed at providing time-saving and flexible development for robust, adaptable telecom systems. it consists of an Erlang runtime system, a number of ready-to-use components mainly written in Erlang, and a set of design principles for Erlang programs. since Erlang and OTP are closely interconnected the term Erlang/OTP is normally used instead of OTP.
+</details>
+
 ***
 
 # Projects
