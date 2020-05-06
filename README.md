@@ -3137,6 +3137,54 @@ the OTP framework is also a set of modules and standards designed to help you bu
 
 erlang is a general-purpose programming language with built-in support for concurrency, distribution and fault tolerance. OTP (Open Telecom Platform) is aimed at providing time-saving and flexible development for robust, adaptable telecom systems. it consists of an Erlang runtime system, a number of ready-to-use components mainly written in Erlang, and a set of design principles for Erlang programs. since Erlang and OTP are closely interconnected the term Erlang/OTP is normally used instead of OTP.
 </details>
+<details>
+  <summary><strong>a common process</strong></summary><br>
+
+in most processes, we had a function in charge of spawning the new process, a function in charge of giving it its initial values, a main loop, etc.
+
+![parts a common process](./assets/a_common_process.png)
+
+the engineers and computer scientists behind the OTP framework spotted these patterns and included them in a bunch of common libraries. they contain functions to safely spawn and initialize processes, send messages to them in a fault-tolerant manner and many other things. funnily enough, you should rarely need to use these libraries yourself. the abstractions they contain are so basic and universal that a lot more interesting things were built on top of them. those libraries are the ones we'll use.
+
+![abstraction layers](./assets/abstraction_layers.png)
+
+</details>
+<details>
+  <summary><strong>basic server</strong></summary><br>
+
+basic server would receive calls from the client, act on them and then reply to it if the protocol said to do so.
+
+> **see [kitty_server.erl](./code/otp/basic_server/kitty_server.erl)**
+
+**example**; `kitty_server`, the behavior is extremely simple: you describe a cat and you get that cat. If someone returns a cat, it's added to a list and is then automatically sent as the next order instead of what the client actually asked for. lets test it;
+
+    KittyShop = kitty_server:start_link().
+    -> <0.825.0>
+
+    CatCarl = kitty_server:order_cat(KittyShop, carl, brown, "loves to burn bridges").
+    -> {cat,carl,brown,"loves to burn bridges"}
+
+    kitty_server:return_cat(KittyShop, CatCarl).
+    -> ok
+
+    kitty_server:order_cat(KittyShop, jimmy, orange, "cuddly").
+    -> {cat,carl,brown,"loves to burn bridges"}
+
+    kitty_server:order_cat(KittyShop, jimmy, orange, "cuddly").
+    -> {cat,jimmy,orange,"cuddly"}
+
+    kitty_server:return_cat(KittyShop, CatCarl).
+    -> ok
+
+    kitty_server:close_shop(KittyShop).
+    -> carl was set free.
+    -> ok
+
+    kitty_server:close_shop(KittyShop).
+    -> ** exception error: no such process or port
+           in function  kitty_server:close_shop/1 (code/otp/basic_server/kitty_server.erl, line 49)
+
+</details>
 
 ***
 
