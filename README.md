@@ -3191,6 +3191,15 @@ There are lots of similar patterns. For example both synchronous calls are extre
 Many things are abstracted but usage is not changed.
 
 </details>
+<details>
+  <summary><strong>specific vs generic</strong></summary><br>
+
+this is what OTP really is all about: taking all the **generic** components, extracting them in libraries, making sure they work well and then reusing that code when possible. then all that's left to do is focus on the **specific** stuff, things that will always change from application to application.
+
+this separation is good for a couple of things, such as complexity, testing, bug fixing, etc.
+
+</details>
+
 
 ***
 
