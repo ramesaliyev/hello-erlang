@@ -3184,6 +3184,12 @@ basic server would receive calls from the client, act on them and then reply to 
     -> ** exception error: no such process or port
            in function  kitty_server:close_shop/1 (code/otp/basic_server/kitty_server.erl, line 49)
 
+There are lots of similar patterns. For example both synchronous calls are extremely similar,  there is another pattern for asynchronous calls, and loops are also similar with our other process examples. Lets abstract all of theese similar patterns.
+
+> **see [my_server.erl](./code/otp/basic_server/my_server.erl) and [kitty_server2.erl](./code/otp/basic_server/kitty_server2.erl)**
+
+Many things are abstracted but usage is not changed.
+
 </details>
 
 ***
