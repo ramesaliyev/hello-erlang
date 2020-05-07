@@ -3197,9 +3197,151 @@ Many things are abstracted but usage is not changed.
 this is what OTP really is all about: taking all the **generic** components, extracting them in libraries, making sure they work well and then reusing that code when possible. then all that's left to do is focus on the **specific** stuff, things that will always change from application to application.
 
 this separation is good for a couple of things, such as complexity, testing, bug fixing, etc.
+</details>
+<details>
+  <summary><strong>gen_server</strong></summary><br>
+
+**`gen_server`** is an `OTP` behaviour module for implementing the server of a client-server relation. it stands for **Generic Server**, and it’s basically an interface to build processes that behaves like a server. every module that implements it will have a standard set of interface functions.
+
+# relation
+
+    gen_server module            Callback module
+    -----------------            ---------------
+    gen_server:start
+    gen_server:start_link -----> Module:init/1
+
+    gen_server:stop       -----> Module:terminate/2
+
+    gen_server:call
+    gen_server:multi_call -----> Module:handle_call/3
+
+    gen_server:cast
+    gen_server:abcast     -----> Module:handle_cast/2
+
+    -                     -----> Module:handle_info/2
+
+    -                     -----> Module:terminate/2
+
+    -                     -----> Module:code_change/3
+
+# interface functions
+
+## init
+
+`init/1` used to initialize the server's state and do all of these one-time tasks that it will depend on. the function can return;
+
+- **`{ok, State}`**
+  - `State` will be passed directly to the main `loop` of the process as the state.
+- **`{ok, State, TimeOut}`**
+  - `TimeOut` variable is meant to be added to the tuple whenever you need a deadline before which you expect the server to receive a message. if no message is received before the deadline, a special one (the atom `timeout`) is sent to the server, which should be handled with `handle_info/2`.
+- **`{ok, State, hibernate}`**
+  - if you do expect the process to take a long time before getting a reply and are worried about memory, you can add the `hibernate` atom to the tuple.
+  - hibernation basically reduces the size of the process' state until it gets a message, at the cost of some processing power.
+  - hibernation puts the calling process into a wait state where its memory allocation has been reduced as much as possible, which is useful if the process does not expect to receive any messages in the near future. once the process receives a message, the function `M:F` with `A` as arguments is called and the execution resumes.
+- **`{stop, Reason}`**
+  - should be done when something went wrong during the initialization.
+- **`ignore`**
+  - same as above
+
+while `init/1` is running, execution is blocked in the process that spawned the server. this is because it is waiting for a *ready* message sent automatically by the `gen_server` module to make sure everything went fine.
+
+## handle_call
+
+`handle_call/3` is used to work with **`synchronous`** messages. takes 3 parameters: `Request,` `From`, and `State`. `Request` is the message coming from sender, `From` is a tuple formed as `{Pid, Ref}` and `State` is the current state of the process.
+
+to reply messages there are 8 different return values possible, taking the form of tuples.
+
+  - `{reply,Reply,NewState}`
+  - `{reply,Reply,NewState,Timeout}`
+  - `{reply,Reply,NewState,hibernate}`
+  - `{noreply,NewState}`
+  - `{noreply,NewState,Timeout}`
+  - `{noreply,NewState,hibernate}`
+  - `{stop,Reason,Reply,NewState}`
+  - `{stop,Reason,NewState}`
+
+for all of these;
+
+  - `Timeout` and `hibernate` work the same way as for `init/1`
+  - `Reply` will be sent back to whoever called the server
+  - when you use `noreply`, the generic part of the server will assume you're taking care of sending the reply back yourself.
+    - this can be done with `gen_server:reply/2`, which has signature `From, Reply`
+
+## handle_cast
+
+`handle_cast/2` is used to work with **`asynchronous`** messages. takes the parameters `Request` and `State`. details of these parameters are same as above.
+
+since this is an asynchronous flow, only tuples without replies are valid return values:
+
+ - {noreply,NewState}
+ - {noreply,NewState,Timeout}
+ - {noreply,NewState,hibernate}
+ - {stop,Reason,NewState}
+
+## handle_info
+
+this is very similar to `handle_cast/2` and returns the same tuples. the difference is that this callback is only there for messages that were **sent directly with the `!` operator** and special ones like `init/1`'s `timeout`, `monitors' notifications` and `EXIT` signals.
+
+## terminate
+
+`terminate/2` is called whenever one of the three `handle_*` functions returns a tuple of the form `{stop, Reason, NewState}` or `{stop, Reason, Reply, NewState}`. takes two parameters, `Reason` and `State`, corresponding to the same values from the stop tuples.
+
+`terminate/2` will also be called when its parent (the process that spawned it) dies, if and only if the `gen_server` is trapping exits.
+
+**note:** if any reason other than `normal`, `shutdown` or `{shutdown, Term}` is used when `terminate/2` is called, the OTP framework will see this as a failure and start logging a bunch of stuff here and there for you.
+
+this function is pretty much the direct opposite of `init/1` so whatever was done in there should have its opposite in `terminate/2`. return value of this function doesn't really matter, because the code stops executing after it's been called.
+
+## code_change
+
+`code_change/3` is there to let you upgrade code. takes the form `code_change(PreviousVersion, State, Extra)`.
+
+  - **`PreviousVersion`** is either
+    - the `version term itself` in the case of an upgrade (see modules),
+    - `{down, Version}` in the case of a downgrade (just reloading older code).
+  - **`State`** variable holds all of the current's server state so you can convert it.
+    - after you done converting the state just retrun `{ok, NewState}`.
+  - **`Extra`** variable is mostly used in larger OTP deployment, where specific tools exist to upgrade entire releases on a VM.
+
+# methods
+
+> see [full list](https://erldocs.com/maint/stdlib/gen_server.html)
+
+  - **`gen_server:start_link(Module, Args, Options) -> Result`**
+    - first parameter is the callback module. second one is the list of parameters to pass to `init/1`. third one is about debugging options.
+  - **`gen_server:start_link(ServerName, Module, Args, Options) -> Result`**
+    - first one will be the name to register the server with. note that while the previous version of the function simply returned a `pid`, this one instead returns `{ok, Pid}`.
+  - **`call(ServerRef, Request) -> Reply`**
+  - **`call(ServerRef, Request, Timeout) -> Reply`**
+    - if you don't give a `Timeout` to the function (or the atom `infinity`), the default is set to `5 seconds`. if no reply is received before time is up, the call crashes.
+
+# example
+
+> **see [kitty_gen_server.erl](./code/otp/gen_server/kitty_gen_server.erl)**
+
+this could be tested in the same way used in `basic_server` section.
 
 </details>
+<details>
+  <summary><strong>behaviour</strong></summary><br>
 
+a behaviour is basically a way for a module to specify functions it expects another module to have. the behaviour is the contract sealing the deal between the well-behaved generic part of the code and the specific, error-prone part of the code (yours).
+
+note: both `behavior` and `behaviour` are accepted by the Erlang compiler.
+
+defining your own behaviours is really simple. you just need to export a function called `behaviour_info/1` implemented as follows:
+
+    -module(my_behaviour).
+    -export([behaviour_info/1]).
+
+    %% init/1, some_fun/0 and other/3 are now expected callbacks
+
+    behaviour_info(callbacks) ->
+      [{init,1}, {some_fun, 0}, {other, 3}];
+    behaviour_info(_) -> undefined.
+
+you can just use `-behaviour(my_behaviour).` in a module implementing them to get compiler warnings if you forgot a function.
+</details>
 
 ***
 
@@ -3626,6 +3768,18 @@ officially: "a semaphore restricts the number of simultaneous users of a shared 
 
 **idiomatic code** means following the conventions of the language. you should find the easiest and most common ways of accomplishing a task rather than porting your knowledge from a different language.
 </details>
+<details>
+  <summary><strong>argument vs parameter</strong></summary><br>
+
+**parameter** is variable in the declaration of function.
+
+    function(parameter_1, parameter_2) -> ok.
+
+**argument** is the actual value of this variable that gets passed to function.
+
+    function(argument_1, argument_2).
+
+</details>
 
 ***
 
@@ -3658,6 +3812,9 @@ officially: "a semaphore restricts the number of simultaneous users of a shared 
 ## Must See
 - [Erlang: The Movie](https://www.youtube.com/watch?v=BXmOlCy0oBM)
 - [Why did Alan Kay dislike Java](https://www.quora.com/Why-did-Alan-Kay-dislike-Java)
+
+## Tools
+- [Erlang Performance Lab](https://github.com/erlanglab/erlangpl)
 
 ***
 
