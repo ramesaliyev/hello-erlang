@@ -3342,6 +3342,71 @@ defining your own behaviours is really simple. you just need to export a functio
 
 you can just use `-behaviour(my_behaviour).` in a module implementing them to get compiler warnings if you forgot a function.
 </details>
+<details>
+  <summary><strong>finite-state machines</strong></summary><br>
+
+a finite-state machine (FSM) is a virtual machine which does have a finite number of states.
+
+## simple finite-state machines
+
+> **see [cat_fsm.erl](./code/otp/fsm/cat_fsm.erl)**
+
+![Cat FSM](./assets/fsm_cat.png)
+
+    CatJo = cat_fsm:start().
+    -> <0.901.0>
+
+    cat_fsm:event(CatJo, "Pet").
+    -> Switching to 'dont_give_crap' state
+    -> {ok,meh}
+
+    cat_fsm:event(CatJo, "Kiss").
+    -> Switching to 'dont_give_crap' state
+    -> {ok,meh}
+
+    cat_fsm:event(CatJo, "Feed").
+    -> Switching to 'dont_give_crap' state
+    -> {ok,meh}
+
+> **see [dog_fsm.erl](./code/otp/fsm/dog_fsm.erl)**
+
+![Dog FSM](./assets/fsm_dog.png)
+
+    DogBrian = dog_fsm:start().
+    -> Dog says: BARK! BARK!
+    -> <0.906.0>
+    ... at every 2 seconds ...
+    -> Dog says: BARK! BARK!
+    -> Dog says: BARK! BARK!
+
+    dog_fsm:pet(DogBrian).
+    -> Dog wags its tail
+    -> pet
+
+    dog_fsm:pet(DogBrian).
+    -> Dog is sitting. Gooooood boy!
+    -> pet
+
+    DogBrian ! "Where is Stewie?".
+    -> Dog is confused
+    -> "Where is Stewie?"
+    -> Dog is sitting. Gooooood boy!
+
+    dog_fsm:squirrel(DogBrian).
+    -> Dog says: BARK! BARK!
+    -> squirrel
+    ... at every 2 seconds ...
+    -> Dog says: BARK! BARK!
+    -> Dog says: BARK! BARK!
+
+    dog_fsm:pet(DogBrian).
+    -> Dog wags its tail
+    -> pet
+    ... after 30 seconds ...
+    -> Dog says: BARK! BARK!
+    -> Dog says: BARK! BARK!
+
+</details>
 
 ***
 
