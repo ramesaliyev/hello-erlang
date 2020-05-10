@@ -8,8 +8,7 @@ Note that this repo is always a *work in progress*.
 ***
 
 # Topics
-<details>
-  <summary><strong>gotchas</strong></summary><br>
+<details><summary><strong>gotchas</strong></summary><br>
 
 - erlang has no such thing as a `null` value
 - every function needs to return something
@@ -17,17 +16,17 @@ Note that this repo is always a *work in progress*.
 - erlang is built on the notion that a failure in one of the components should not affect the whole system
 - every erlang term can be compared to any other
 - erlang is a functional but not a pure functional language, there are side effects, like registering process names.
+
 </details>
-<details>
-  <summary><strong>sayings</strong></summary><br>
+<details><summary><strong>sayings</strong></summary><br>
 
 - Walking on water and developing software from a specification are easy if both are frozen. - *Edward V. Berard*
 - Some people, when confronted with a problem, think “I know, I’ll use regular expressions." Now they have two problems. - *Jamie Zawinski*
+
 </details>
 
 ## basic data types
-<details>
-  <summary><strong>numbers</strong></summary><br>
+<details><summary><strong>numbers</strong></summary><br>
 
 both floating point numbers or integers are supported when dealing with arithmetic. Integers and floating values are pretty much the only types of data Erlang's mathematical operators will handle transparently for you. to have the integer-to-integer division, use `div`, and to have the modulo operator, use `rem`.
 
@@ -49,8 +48,7 @@ to express integers in other bases than base 10, just enter the number as `Base#
     -> 174
 
 </details>
-<details>
-  <summary><strong>invariable variables</strong></summary><br>
+<details><summary><strong>invariable variables</strong></summary><br>
 
 variable names must begin with a capital letter. you can assign a value to a variable exactly once. you can `pretend` to assign a value to a variable if it's the same value it already has.
 
@@ -70,9 +68,9 @@ if the left-hand side term is a variable and it is `unbound` (has no value assoc
 the `=` operator is the basis of the `pattern matching`
 
 technically, variables can start with an underscore too, but by convention their use is restricted to values you do not care about, yet you felt it was necessary to document what it contains.
+
 </details>
-<details>
-  <summary><strong>atoms</strong></summary><br>
+<details><summary><strong>atoms</strong></summary><br>
 
 atoms are literals, constants with their own name for value. an atom should be enclosed in single quotes (') if it does not begin with a lower-case letter or if it contains other characters than alphanumeric characters, underscore or @.
 
@@ -90,9 +88,9 @@ an atom is referred to in an `atom table` which consumes memory. atom table is n
 some atoms are reserved words: `after`, `and`, `andalso`, `band`, `begin`, `bnot`, `bor`, `bsl`, `bsr`, `bxor`, `case`, `catch`, `cond`, `div`, `end`, `fun`, `if`, `let`, `not`, `of`, `or`, `orelse`, `query`, `receive`, `rem`, `try`, `when`, `xor`
 
 atoms can only be compared and nothing else
+
 </details>
-<details>
-  <summary><strong>boolean algebra</strong></summary><br>
+<details><summary><strong>boolean algebra</strong></summary><br>
 
 there is not much to say
 
@@ -114,9 +112,9 @@ there is not much to say
 the boolean operators `and` and `or` will always evaluate arguments on both sides of the operator. If you want to have the short-circuit operators (which will only evaluate the right-side argument if it needs to), use `andalso` and `orelse`.
 
 erlang has no such things as boolean `true` and `false`. **the terms true and false are atoms**, *but they are integrated well enough into the language you shouldn't have a problem with that as long as you don't expect false and true to mean anything but false and true.*
+
 </details>
-<details>
-  <summary><strong>comparison operators</strong></summary><br>
+<details><summary><strong>comparison operators</strong></summary><br>
 
 - `=:=` exactly equal
 - `=/=` exactly not equal
@@ -176,9 +174,10 @@ this is why you can compare anything with anything.
 1 < false.
 -> true
 ```
+
 </details>
-<details>
-  <summary><strong>tuples</strong></summary><br>
+<details><summary><strong>tuples</strong></summary><br>
+
 A tuple is a way to organize data.
 
     Point = {3,5}.
@@ -225,9 +224,9 @@ you can do some arithmetic classifying operations on tuples such as sort, min, m
 
     erlang:max({3, x}, {7, y}).
     -> {7, y}
+
 </details>
-<details>
-  <summary><strong>lists</strong></summary><br>
+<details><summary><strong>lists</strong></summary><br>
 
 lists can contain anything and you can mix more than one type of data in it.
 
@@ -326,8 +325,7 @@ add head
 note: using the form `[1 | 2]` gives what we call an `improper list`. improper lists will work when you pattern match in the `[Head|Tail]` manner, but will fail to be used with standard functions of erlang (even `length()`). this is because erlang expects `proper lists`. proper lists **end with an empty list** as their last cell. when declaring an item like `[2]`, the list is automatically formed in a proper manner. as such, `[1|[2]]` would work! improper lists, although syntactically valid, are of very limited use outside of user-defined data structures.
 
 </details>
-<details>
-  <summary><strong>strings</strong></summary><br>
+<details><summary><strong>strings</strong></summary><br>
 
 we know that strings are actually lists and there is no such thing as a real string in erlang. but we can create strings (lists) easily with double quote `"`. remember single quotes `'` are for atoms.
 
@@ -356,8 +354,7 @@ but even there is no real strings, there are string operations on erlang;
 > **see [road.erl](./code/examples/road.erl) as example of string operations**
 
 </details>
-<details>
-  <summary><strong>list comprehensions</strong></summary><br>
+<details><summary><strong>list comprehensions</strong></summary><br>
 
 list comprehensions are ways to build or modify lists. it's based off the idea of set notation.
 
@@ -395,9 +392,9 @@ expressions coupled with pattern matching also act as a filter:
     FoggyPlaces = [X || {X, fog} <- Weather].
 
     -> [london,boston]
+
 </details>
-<details>
-  <summary><strong>bit syntax</strong></summary><br>
+<details><summary><strong>bit syntax</strong></summary><br>
 
 bit syntax encloses binary data between `<<` and `>>`, splits it in readable segments, and each segment is separated by a comma. a segment is a sequence of bits of a binary (not necessarily on a byte boundary, although this is the default behaviour)
 
@@ -506,9 +503,9 @@ parsing TCP segments example:
     Bitstring = <<"this is a bit string!">>.
     Bitstring.
     -> <<"this is a bit string!">>
+
 </details>
-<details>
-  <summary><strong>binary comprehensions</strong></summary><br>
+<details><summary><strong>binary comprehensions</strong></summary><br>
 
 binary comprehensions are to bit syntax what list comprehensions are to lists: a way to make code short and concise
 
@@ -530,11 +527,11 @@ binary comprehension syntax to change non-binary data to binary data;
 it is possible to have a binary comprehension with a binary generator
 
     << <<(X+1)/integer>> || <<X>> <= <<3,7,5,4,7>> >>.
+
 </details>
 
 ## modules
-<details>
-  <summary><strong>modules</strong></summary><br>
+<details><summary><strong>modules</strong></summary><br>
 
 - modules are a bunch of `functions` regrouped in a single file, under a single name.
 - all functions in erlang must be defined in modules.
@@ -598,8 +595,7 @@ comments are single-line only and begin with a `%` sign (using `%%` is purely a 
 - it is usually considered a good practice to regroup functions that have similar roles close together
 
 </details>
-<details>
-  <summary><strong>compiling and using the code</strong></summary><br>
+<details><summary><strong>compiling and using the code</strong></summary><br>
 
 erlang code is compiled to `bytecode` in order to be used by the `virtual machine`.
 - from command line: `erlc flags file.erl`
@@ -721,9 +717,10 @@ compiler will pick up most module attributes and store them (along with other in
 `vsn` is an automatically generated `unique value differentiating` each version of your code, excluding comments. it is used in `code hot-loading` (upgrading an application while it runs, without stopping it) and by some tools related to release handling. You can also specify a vsn value yourself if you want: just add `-vsn(VersionNumber)` to your module.
 
 an [example usage of module attributes  in a testing script](https://learnyousomeerlang.com/static/erlang/tester.erl) to annotate functions for which unit tests could be better; the script looks up module attributes, finds the annotated functions and shows a warning about them.
+
 </details>
-<details>
-  <summary><strong>io:format</strong></summary><br>
+<details><summary><strong>io:format</strong></summary><br>
+
 - `io:format`'s formatting is done with the help of tokens being replaced in a string
 - the character used to denote a token is the tilde (`~`)
 - some tokens are built-in such as `~n`, which will be changed to a `line-break`
@@ -751,11 +748,11 @@ an [example usage of module attributes  in a testing script](https://learnyousom
     -> ok
 
 [more about io:format](http://erlang.org/doc/man/io.html#format-3)
+
 </details>
 
 ## syntax in functions
-<details>
-  <summary><strong>pattern matching</strong></summary><br>
+<details><summary><strong>pattern matching</strong></summary><br>
 
   pattern matching cannot express things like a range of value or certain types of data. we're gonna use guards for that. pattern matching good for specifying really precise values or abstract values.
 
@@ -819,9 +816,9 @@ there is a problem though! this function could take anything for values, even te
 ## bound and unbound variables
 
 **unbound** variables are variables without any values attached to them. binding a variable is simply attaching a value to an unbound variable. in the case of erlang, **when you want to assign a value to a variable that is already bound, an error occurs unless the new value is the same as the old one**.
+
 </details>
-<details>
-  <summary><strong>guards</strong></summary><br>
+<details><summary><strong>guards</strong></summary><br>
 
 guards are additional clauses that can go in a function's head to make pattern matching more expressive. can express a range of value or certain types of data.
 
@@ -884,9 +881,9 @@ other allowed functions: `abs(Number)`, `bit_size(Bitstring)`, `byte_size(Bitstr
 but guard expressions **will not accept user-defined functions** because of side effects. erlang is not a purely functional programming language (like `Haskell` is) because it relies on side effects a lot: you can do I/O, send messages between actors or throw errors as you want and when you want. there is no trivial way to determine if a function you would use in a guard would or wouldn't print text or catch important errors every time it is tested over many function clauses. so instead, erlang just doesn't trust you.
 
 when erlang can't find a way to have a guard succeed, it will crash: it **cannot not return something.**
+
 </details>
-<details>
-  <summary><strong>if</strong></summary><br>
+<details><summary><strong>if</strong></summary><br>
 
 `if`s act like guards and share guards' syntax, but outside of a function clause's head. the if clauses are called `Guard Patterns`.
 
@@ -917,9 +914,9 @@ when erlang can't find a way to have a guard succeed, it will crash: it **cannot
 
     ifs:animal_says("zombie").
     -> {"zombie","says idunnowhattosay!"}
+
 </details>
-<details>
-  <summary><strong>case ... of</strong></summary><br>
+<details><summary><strong>case ... of</strong></summary><br>
 
 if the `if` expression is like a `guard`, a `case ... of` expression is like the whole function head: you can have the complex pattern matching you can use with each argument, and you can have guards on top of it!
 
@@ -935,8 +932,7 @@ if the `if` expression is like a `guard`, a `case ... of` expression is like the
     -> [archer, bender]
 
 </details>
-<details>
-  <summary><strong>which to use</strong></summary><br>
+<details><summary><strong>which to use</strong></summary><br>
 
 even the writer of the book not sure what to say about `function heads` vs `case ... ofs`. and the community is not agreed either.
 
@@ -946,15 +942,14 @@ all of this is more about personal preferences and what you may encounter more o
 </details>
 
 ## types
-<details>
-  <summary><strong>dynamically and strongly typed</strong></summary><br>
+<details><summary><strong>dynamically and strongly typed</strong></summary><br>
 
 **erlang is dynamically typed**: every error is caught at **runtime** and the compiler won't always yell at you when compiling modules where things may result in failure.
 
 **erlang is also strongly typed**: it wont do implicit type conversions between terms.
+
 </details>
-<details>
-  <summary><strong>type conversions</strong></summary><br>
+<details><summary><strong>type conversions</strong></summary><br>
 
 each of casting functions take the form `<type>_to_<type>` and are implemented in the `erlang` module.
 
@@ -982,16 +977,15 @@ each of casting functions take the form `<type>_to_<type>` and are implemented i
 whole list:
 
 `atom_to_binary/2`, `atom_to_list/1`, `binary_to_atom/2`, `binary_to_existing_atom/2`, `binary_to_list/1`, `bitstring_to_list/1`, `binary_to_term/1`, `binary_to_term/2`, `float_to_list/1`, `fun_to_list/1`, `integer_to_list/1`, `integer_to_list/2`, `iolist_to_binary/1`, `iolist_to_atom/1`, `list_to_atom/1`, `list_to_binary/1`, `list_to_bitstring/1`, `list_to_existing_atom/1`, `list_to_float/1`, `list_to_integer/2`, `list_to_pid/1`, `list_to_tuple/1`, `pid_to_list/1`, `port_to_list/1`, `ref_to_list/1`, `term_to_binary/1`, `term_to_binary/2` and `tuple_to_list/1`
+
 </details>
-<details>
-  <summary><strong>type checking</strong></summary><br>
+<details><summary><strong>type checking</strong></summary><br>
 
 `is_atom/1`, `is_binary/1`, `is_bitstring/1`, `is_boolean/1`, `is_builtin/3`, `is_float/1`, `is_function/1`, `is_function/2`, `is_integer/1`, `is_list/1`, `is_map/1`, `is_number/1`, `is_pid/1`, `is_port/1`, `is_record/2`, `is_record/3`, `is_reference/1`, `is_tuple/1`
 </details>
 
 ## recursion
-<details>
-  <summary><strong>recursion</strong></summary><br>
+<details><summary><strong>recursion</strong></summary><br>
 
 > **see [recursive.erl](./code/recursion/recursive.erl)**
 
@@ -1027,8 +1021,7 @@ whole list:
 > - [tree.erl](./code/examples/tree.erl)
 
 </details>
-<details>
-  <summary><strong>tail recursion</strong></summary><br>
+<details><summary><strong>tail recursion</strong></summary><br>
 
 > **see [recursive.erl](./code/recursion/recursive.erl)**
 
@@ -1068,8 +1061,7 @@ most of the times, as a last step, (before returning them), we will reverse our 
 </details>
 
 ## higher order functions
-<details>
-  <summary><strong>higher order functions</strong></summary><br>
+<details><summary><strong>higher order functions</strong></summary><br>
 
 function that can accept other functions transported around is named a higher order function.
 
@@ -1088,8 +1080,7 @@ if function names are written without a parameter list then those names are inte
     -> [0,1,2,3,4]
 
 </details>
-<details>
-  <summary><strong>anonymous functions</strong></summary><br>
+<details><summary><strong>anonymous functions</strong></summary><br>
 
 anonymous functions, or `fun`s, letting you declare a special kind of function inline, without naming it. they can do pretty much everything normal functions can do, except calling themselves recursively.
 
@@ -1141,8 +1132,7 @@ example
     -> [2.0, 4.0, 8.0, 16.0, 32.0]
 
 </details>
-<details>
-  <summary><strong>anonymous but named functions</strong></summary><br>
+<details><summary><strong>anonymous but named functions</strong></summary><br>
 
 the language supports using anonymous functions with an internal name. the trick is that the name is visible only within the function's scope, not outside of it. main advantage of this is that it makes it possible to define anonymous recursive functions.
 
@@ -1167,8 +1157,7 @@ the language supports using anonymous functions with an internal name. the trick
     -> ...
 
 </details>
-<details>
-  <summary><strong>maps, filters, folds and more</strong></summary><br>
+<details><summary><strong>maps, filters, folds and more</strong></summary><br>
 
 > **see [fold.erl](./code/higher_order_fns/fold.erl)**
 
@@ -1262,8 +1251,7 @@ check lists documentations, [official](http://erlang.org/doc/man/lists.html) or 
 </details>
 
 ## errors and exceptions
-<details>
-  <summary><strong>compile-time errors</strong></summary><br>
+<details><summary><strong>compile-time errors</strong></summary><br>
 
 compile-time errors are often syntactic mistakes. here's a list of some of the common compile-time error messages and potential resolutions in case you encounter them:
 
@@ -1299,9 +1287,9 @@ a function defined in the module has a specific clause defined after a catch-all
 
 **`./module.erl:9: variable 'A' unsafe in 'case' (line 5)`**<br>
 you're using a variable declared within one of the branches of a `case ... of` outside of it. this is considered `unsafe`. if you want to use such variables, you'd be better of doing `MyVar = case ... of...`
+
 </details>
-<details>
-  <summary><strong>run-time errors</strong></summary><br>
+<details><summary><strong>run-time errors</strong></summary><br>
 
 list of common run-time errors with an explanation and example code that could generate them.
 
@@ -1380,9 +1368,9 @@ there are many reasons why a `system_limit` error can be thrown:
 - etc,
 
 to get a full list in details, read the [Erlang Efficiency Guide](http://erlang.org/doc/efficiency_guide/advanced.html#id2265856) on system limits. note that some of these errors are serious enough to crash the whole VM.
+
 </details>
-<details>
-  <summary><strong>raising exceptions</strong></summary><br>
+<details><summary><strong>raising exceptions</strong></summary><br>
 
 in trying to monitor the execution of code and protect against `logical errors`, it's often a good idea to provoke run-time crashes so problems will be spotted early.
 
@@ -1442,8 +1430,7 @@ throws can also be used for non-local returns when in deep recursion.
 example could be the array module, where there is a lookup function that can return a user-supplied default value if it can't find the element needed. when the element can't be found, the value `default` is thrown as an exception, and the top-level function handles that and substitutes it with the user-supplied default value. this keeps the programmer of the module from needing to pass the default value as a parameter of every function of the lookup algorithm. this lets the implementer only write for the successful cases.
 
 </details>
-<details>
-  <summary><strong>dealing with exceptions</strong></summary><br>
+<details><summary><strong>dealing with exceptions</strong></summary><br>
 
 a `try ... catch` is a way to evaluate an expression while letting you handle the successful case as well as the errors encountered.
 
@@ -1540,8 +1527,7 @@ it is possible to have **more than one expression** between the `try` and the `o
     -> {caught,throw,up}
 
 </details>
-<details>
-  <summary><strong>error vs exit vs throw</strong></summary><br>
+<details><summary><strong>error vs exit vs throw</strong></summary><br>
 
 the real difference between the three types is the communication intent, not a special behaviour. so from the pure theoretical point of view an error exception can be replaced by a throw exception without any side effect. obviously, the communication intent is not negligible: indeed, throw exceptions are usually documented while errors are not intended for being formalized.
 
@@ -1553,18 +1539,18 @@ exit means that your code is being told to stop immediately.
 
 **`throw`**<br>
 throw identifies an exception that a called function voluntarily raises (throwing it at you); such exceptions shall be documented, i.e. the documentation of the function you are calling shall state that this exception may be raised and specify under what conditions this may happen.
+
 </details>
-<details>
-  <summary><strong>protected part cant be tail recursive</strong></summary><br>
+<details><summary><strong>protected part cant be tail recursive</strong></summary><br>
 
 the protected part of an exception can't be tail recursive. the VM must always keep a reference there in case there's an exception popping up.
 
 because the `try ... catch` construct without the `of` part has nothing but a protected part, calling a recursive function from there might be dangerous for programs supposed to run for a long time (which is Erlang's niche). after enough iterations, you'll go out of memory or your program will get slower without really knowing why. by putting your recursive calls between the `of` and `catch`, you are not in a protected part and you will benefit from `Last Call Optimisation`.
 
 some people use `try ... of ... catch` rather than `try ... catch` by default to avoid unexpected errors of that kind, except for obviously non-recursive code with results that won't be used by anything.
+
 </details>
-<details>
-  <summary><strong>catch</strong></summary><br>
+<details><summary><strong>catch</strong></summary><br>
 
 > **see [exceptions.erl](./code/exceptions/exceptions.erl)**
 
@@ -1680,8 +1666,7 @@ because we're behind a catch, we can never know if the function threw an excepti
 </details>
 
 ## files
-<details>
-  <summary><strong>reading files</strong></summary><br>
+<details><summary><strong>reading files</strong></summary><br>
 
     {ok, Binary} = file:read_file("code/examples/road.txt").
     -> {ok,<<"50\n10\n30\n5\n90\n20\n40\n2\n25\n10\n8\n0">>}
@@ -1692,8 +1677,7 @@ because we're behind a catch, we can never know if the function threw an excepti
 </details>
 
 ## data structures
-<details>
-  <summary><strong>records</strong></summary><br>
+<details><summary><strong>records</strong></summary><br>
 
 records are useful whenever you have a small data structure where you want to access the attributes by name directly.
 
@@ -1791,8 +1775,7 @@ its possible share records across modules with the help of `header` files. erlan
           unimaginative_name = undefined}
 
 </details>
-<details>
-  <summary><strong>key-value stores</strong></summary><br>
+<details><summary><strong>key-value stores</strong></summary><br>
 
 ## proplist
 
@@ -1991,8 +1974,7 @@ some special key-value stores exist to deal with resources of different size
 their use is strongly related to the concepts of multiple processes and distribution. because of this, they'll only be approached later on.
 
 </details>
-<details>
-  <summary><strong>maps</strong></summary><br>
+<details><summary><strong>maps</strong></summary><br>
 
 `maps` are a data type similar to the `dict` data structure in intent, and has been given a module with a similar interface and semantics. [maps](https://erldocs.com/maint/stdlib/maps.html) module could be used. some of supported operations:
 
@@ -2154,8 +2136,7 @@ Standalone data type at runtime||✓|
 Fast direct-index access|✓||
 
 </details>
-<details>
-  <summary><strong>arrays</strong></summary><br>
+<details><summary><strong>arrays</strong></summary><br>
 
 `arrays` allow you to access elements with numerical indices and to fold over the whole structure while possibly ignoring undefined slots. [array](https://erldocs.com/maint/stdlib/array.html) module could be used.
 
@@ -2185,9 +2166,9 @@ Fast direct-index access|✓||
     -> 2
 
 erlang arrays, at the opposite of their imperative counterparts, **are not able to have such things as constant-time insertion or lookup**. because they're usually slower than those in languages which support destructive assignment and that the style of programming done with Erlang doesn't necessary lend itself too well to arrays and matrices, **they are rarely used in practice**.
+
 </details>
-<details>
-  <summary><strong>sets</strong></summary><br>
+<details><summary><strong>sets</strong></summary><br>
 
 `sets` are groups of unique elements that you can compare and operate on: find which elements are in two groups, in none of them, only in one or the other, etc. there are more advanced operations letting you define relations and operate on these relations and much more.
 
@@ -2212,9 +2193,9 @@ there are 4 main modules to deal with sets in erlang. they are `ordsets`, `sets`
 sets of sets (`sofs`) are implemented with `sorted lists`, stuck inside a tuple with some metadata. they're the module to use if you want to have full control over relationships between sets, families, enforce set types, etc. they're really what you want if you need mathematics concept rather than *just* groups of unique elements.
 
 [sofs](https://erldocs.com/maint/stdlib/sofs.html) module could be used.
+
 </details>
-<details>
-  <summary><strong>directed graph</strong></summary><br>
+<details><summary><strong>directed graph</strong></summary><br>
 
 in mathematics, and more specifically in graph theory, a directed graph (or digraph) is a graph that is made up of a set of vertices connected by edges, where the edges have a direction associated with them. [wikipedia](http://en.wikipedia.org/wiki/Directed_graph)
 
@@ -2223,9 +2204,9 @@ in mathematics, and more specifically in graph theory, a directed graph (or digr
 `directed graphs` in Erlang are implemented as two modules, [digraph](https://erldocs.com/maint/stdlib/digraph.html) and [digraph_utils](https://erldocs.com/maint/stdlib/digraph_utils). the `digraph` module basically allows the construction and modification of a directed graph: manipulating edges and vertices, finding paths and cycles, etc. on the other hand, `digraph_utils` allows you to navigate a graph (postorder, preorder), testing for cycles, arborescences or trees, finding neighbors, and so on.
 
 because directed graphs are closely related to set theory, the `sofs` module contains a few functions letting you convert [families to digraphs](https://erldocs.com/maint/stdlib/sofs.html#family_to_digraph/2) and [digraphs to families](https://erldocs.com/maint/stdlib/sofs.html#digraph_to_family/2).
+
 </details>
-<details>
-  <summary><strong>queues</strong></summary><br>
+<details><summary><strong>queues</strong></summary><br>
 
 the [queue module](https://erldocs.com/maint/stdlib/queue.html) implements a double-ended [FIFO](http://en.wikipedia.org/wiki/FIFO_(computing)) queue.
 
@@ -2244,8 +2225,7 @@ the Okasaki API is a bit weird. it's derived from [Chris Okasaki's Purely Functi
 </details>
 
 ## concurrency
-<details>
-  <summary><strong>concurrency and parallelism</strong></summary><br>
+<details><summary><strong>concurrency and parallelism</strong></summary><br>
 
 erlang's concurrency was based on message passing and the actor model.
 
@@ -2256,9 +2236,9 @@ erlang had **concurrency** from the beginning, even when everything was done on 
 erlang was only adapted to true **symmetric multiprocessing** in the mid 2000s and only got most of the implementation right with the R13B release of the language in 2009. before that, SMP often had to be disabled to avoid performance losses. to get parallelism on a multicore computer without SMP, you'd start many instances of the VM instead.
 
 an interesting fact is that because Erlang concurrency is all about isolated processes, it took no conceptual change at the language level to bring true parallelism to the language. all the changes were transparently done in the VM, away from the eyes of the programmers.
+
 </details>
-<details>
-  <summary><strong>concepts of concurrency</strong></summary><br>
+<details><summary><strong>concepts of concurrency</strong></summary><br>
 
 ## scalability
 **scalability** is the property of a system to handle a growing amount of work by adding resources to the system.
@@ -2294,9 +2274,9 @@ well it turns out the choice of asynchronous message passing was a good design p
 erlang implementers keep control of optimization and reliability. nowadays, Erlang's processes take about 300 words of memory each and can be created in a matter of microseconds.
 
 to handle all these potential processes your programs could create, the VM starts one thread per core which acts as a scheduler. each of these schedulers has a run queue, or a list of Erlang processes on which to spend a slice of time. when one of the schedulers has too many tasks in its run queue, some are migrated to another one. this is to say each Erlang VM takes care of doing all the load-balancing and the programmer doesn't need to worry about it. there are some other optimizations that are done, such as limiting the rate at which messages can be sent on overloaded processes in order to regulate and distribute the load.
+
 </details>
-<details>
-  <summary><strong>vs linear scaling</strong></summary><br>
+<details><summary><strong>vs linear scaling</strong></summary><br>
 
 your program should go twice as fast if you add a second core, four times faster if there are 4 more and so on, right? it depends. such a phenomenon is named **linear scaling** in relation to speed gain vs. the number of cores or processors. in real life, most of the time, this is not the case.
 
@@ -2311,9 +2291,9 @@ a generalisation of this principle is called **Amdahl's Law**. it indicates how 
 according to Amdahl's law, code that is **50%** parallel **can never get faster than twice** what it was before, and code that is **95%** parallel can theoretically be expected to be about **20 times faster** if you add enough processors. what's interesting to see on this graph is how getting rid of the last few sequential parts of a program allows a relatively huge theoretical speedup compared to removing as much sequential code in a program that is not very parallel to begin with.
 
 parallelism is not the answer to every problem. in some cases, going parallel will even slow down your application. this can happen whenever your program is 100% sequential, but still uses multiple processes. in this case, disabling symmetric multiprocessing (`$ erl -smp disable`) might be a good idea.
+
 </details>
-<details>
-  <summary><strong>spawn()</strong></summary><br>
+<details><summary><strong>spawn()</strong></summary><br>
 
 primitives required for concurrency in Erlang: **spawning new processes**, **sending messages**, and **receiving messages**.
 
@@ -2358,9 +2338,10 @@ lets start 10 processes and pause each of them for a while with the help of the 
 because the processes are running at the same time, the ordering of events isn't guaranteed. welcome to parallelism.
 
 > you can start the Erlang VM with disabled symmetric multiprocessing by `$ erl +S 1` command. to see if smp is activated check `explanations of emulator info statements` under shell topic.
+
 </details>
-<details>
-  <summary><strong>self()</strong></summary><br>
+<details><summary><strong>self()</strong></summary><br>
+
 shell itself is implemented as a regular process. we can use `self/0` to get the pid of the current process.
 
     self().
@@ -2373,9 +2354,9 @@ shell itself is implemented as a regular process. we can use `self/0` to get the
     -> <0.83.0>
 
 the pid changes because the process has been restarted.
+
 </details>
-<details>
-  <summary><strong>message passing and receiving</strong></summary><br>
+<details><summary><strong>message passing and receiving</strong></summary><br>
 
 the primitive required to do **message passing** is the operator **`!`**, also known as the *bang symbol*. on the left-hand side it takes a `pid` and on the right-hand side it takes `any Erlang term`. the term is then sent to the process represented by the `pid`, which can access it:
 
@@ -2468,9 +2449,9 @@ and lastly, to avoid starting a new process for each call, we're gonna use recur
     -> ok
 
 **note** when messages are sent to a `process`, they're stored in the `mailbox` until the process reads them and they **match a pattern** there. the messages are stored in the order they were received. this means every time you match a message, it begins by the `oldest` one. that oldest message is then tried against every pattern of the receive until one of them matches. when it does, the message is removed from the mailbox and the code for the process executes normally until the next `receive`.
+
 </details>
-<details>
-  <summary><strong>state</strong></summary><br>
+<details><summary><strong>state</strong></summary><br>
 
 > **see [kitchen.erl](./code/concurrency/kitchen.erl)**
 
@@ -2492,9 +2473,9 @@ and lastly, to avoid starting a new process for each call, we're gonna use recur
     -> Shell got {<0.139.0>,{ok,bacon}}
     -> Shell got {<0.139.0>,not_found}
     -> ok
+
 </details>
-<details>
-  <summary><strong>abstracting details</strong></summary><br>
+<details><summary><strong>abstracting details</strong></summary><br>
 
 > **see [kitchen.erl](./code/concurrency/kitchen.erl)**
 
@@ -2525,9 +2506,9 @@ lets abstract everything;
 
     kitchen:take(Fridge2, dog).
     -> not_found
+
 </details>
-<details>
-  <summary><strong>timeout</strong></summary><br>
+<details><summary><strong>timeout</strong></summary><br>
 
     receive
       Match -> Expression1
@@ -2563,9 +2544,9 @@ another special case is when the timeout is at `0`:
 erlang VM will try and find a message that fits one of the available patterns. (in the case above, anything matches.) as long as there are messages, the `flush/0` function will recursively call itself until the mailbox is empty. once this is done, the `after 0 -> ok` part of the code is executed and the function returns.
 
 note that Erlang's timeout value is **limited to about 50 days in milliseconds**.
+
 </details>
-<details>
-  <summary><strong>selective receives</strong></summary><br>
+<details><summary><strong>selective receives</strong></summary><br>
 
 `flushing` concept (see timeout chapter above) makes it possible to implement a **selective receive** which can give a **`priority`** to the messages you receive by `nesting calls`.
 
@@ -2623,9 +2604,9 @@ a new optimization has been added to Erlang's compiler. it simplifies selective 
 > see `optimized/1` in [multiproc.erl](./code/concurrency/multiproc.erl)
 
 to make it work, a `reference` (`make_ref()`) has to be created in a function and then sent in a message. in the same function, a selective receive is then made. if no message can match unless it contains the same reference, the compiler automatically makes sure the **VM will skip messages received before the creation of that reference**.
+
 </details>
-<details>
-  <summary><strong>links</strong></summary><br>
+<details><summary><strong>links</strong></summary><br>
 
 a `link` is a specific kind of relationship that can be created between two processes. when that relationship is set up and one of the processes dies from an unexpected throw, error or exit, the other linked process also dies.
 
@@ -2674,9 +2655,9 @@ after the process running `linkmon:chain(0)` dies, the error is propagated down 
 ## spawn_link
 
 note that `link(spawn(Function))` or `link(spawn(M,F,A))` happens in more than one step. in some cases, it is possible for a process to die before the link has been set up and then provoke unexpected behavior. for this reason, the function `spawn_link/1-3` has been added to the language. it takes the same arguments as `spawn/1-3`, creates a process and links it as if `link/1` had been there, except it's all done as an atomic operation (*the operations are combined as a single one, which can either fail or succeed, but nothing else*). this is generally considered safer and you save a set of parentheses too.
+
 </details>
-<details>
-  <summary><strong>traps</strong></summary><br>
+<details><summary><strong>traps</strong></summary><br>
 
 `error propagation` across processes is done through a process similar to `message passing`, but with a special type of message called `signals`. `exit signals` are **`secret`** messages that automatically act on processes, killing them in the action.
 
@@ -2869,9 +2850,9 @@ there are situations where you might want to **brutally murder a process**: mayb
 as the `kill` reason can never be trapped, it needs to be changed to `killed` when other processes receive the message. otherwise every other process linked to it would die for the same kill reason and would kill its neighbors, and so on.
 
 this also explains why `exit(kill)` looks like `killed` when received from another linked process (**the signal is modified so it doesn't cascade**), but still looks like `kill` when trapped locally (because its already trapped).
+
 </details>
-<details>
-  <summary><strong>monitors</strong></summary><br>
+<details><summary><strong>monitors</strong></summary><br>
 
 monitors are a special type of link with two differences:
 - they are **unidirectional**
@@ -2919,16 +2900,16 @@ function `demonitor/2` also exists and gives a little bit more information. the 
     -> ok
 
 the `info` option tells you if a monitor existed or not when you tried to remove it. this is why the demonitoring expression returned `false`. using `flush` as an option will remove the `DOWN` message from the mailbox if it existed, resulting in `flush()` finding nothing in the current process' mailbox.
+
 </details>
-<details>
-  <summary><strong>links vs monitors</strong></summary><br>
+<details><summary><strong>links vs monitors</strong></summary><br>
 
 **`links`** are more of an organizational construct. when you design the architecture of your application, you determine which process will do which jobs, and what will depend on what. some processes will supervise others, some couldn't live without a twin process, etc. this structure is usually something fixed, known in advance. links are useful for that and should not necessarily be used outside of it.
 
 but what if you have 2 or 3 different libraries that you call and they all need to know whether a process is alive or not? if you were to use `links` for this, you would quickly hit a problem whenever you needed to `unlink` a process. now, **links aren't stackable**, so the moment you `unlink` one, you `unlink` them all and mess up all the assumptions put up by the other libraries. that's pretty bad. so you need *stackable links*, and **`monitors`** are your solution. they can be removed individually. plus, being `unidirectional` is handy in libraries because other processes shouldn't have to be aware of said libraries.
+
 </details>
-<details>
-  <summary><strong>naming processes</strong></summary><br>
+<details><summary><strong>naming processes</strong></summary><br>
 
 > **see [linkmon.erl](./code/concurrency/linkmon.erl)**
 
@@ -3004,9 +2985,7 @@ on *restarter third approach*, we'll use `references` (created with `make_ref()`
 </details>
 
 ## real project
-
-<details>
-  <summary><strong>directory structure</strong></summary><br>
+<details><summary><strong>directory structure</strong></summary><br>
 
 > for examples see [projects](./code/projects)
 
@@ -3046,8 +3025,7 @@ on *restarter third approach*, we'll use `references` (created with `make_ref()`
 - for third party libraries required for your application to run
 
 </details>
-<details>
-  <summary><strong>code hot-loading</strong></summary><br>
+<details><summary><strong>code hot-loading</strong></summary><br>
 
 in order to do `hot code loading`, Erlang has a thing called the **`code server`**. the code server is basically a `VM` process in charge of an [ETS](https://erldocs.com/maint/stdlib/ets.html) table (*in-memory database table, native to the VM*.) the code server can hold **two** versions of a single module in memory, and **both versions can run at once**. a new version of a module is automatically loaded when compiling it with `c(Module)`, loading with `l(Module)` or loading it with one of the many functions of the [code module](http://erldocs.com/maint/kernel/code.html).
 
@@ -3080,8 +3058,7 @@ there are ways to bind yourself to a system module that will send messages whene
       %% transform and return the state here.
 
 </details>
-<details>
-  <summary><strong>makefiles</strong></summary><br>
+<details><summary><strong>makefiles</strong></summary><br>
 
 > for examples see [projects](./code/projects)
 
@@ -3107,8 +3084,7 @@ the `-pa <directory>` option tells the Erlang VM to add that path to the places 
 another option is to start the shell as usual and call `make:all([load])`. this will look for a file named `Emakefile` in the current directory, recompile it (if it changed) and load the new files.
 
 </details>
-<details>
-  <summary><strong>namespaces</strong></summary><br>
+<details><summary><strong>namespaces</strong></summary><br>
 
 yeah, there is no namespaces.
 
@@ -3123,9 +3099,7 @@ erlang has a flat module structure (there is no hierarchy), It is frequent for s
 </details>
 
 ## otp
-
-<details>
-  <summary><strong>what is otp</strong></summary><br>
+<details><summary><strong>what is otp</strong></summary><br>
 
 OTP stands for **Open Telecom Platform**.
 
@@ -3136,9 +3110,9 @@ the OTP framework takes care of common practices on how to write concurrent appl
 the OTP framework is also a set of modules and standards designed to help you build applications.
 
 erlang is a general-purpose programming language with built-in support for concurrency, distribution and fault tolerance. OTP (Open Telecom Platform) is aimed at providing time-saving and flexible development for robust, adaptable telecom systems. it consists of an Erlang runtime system, a number of ready-to-use components mainly written in Erlang, and a set of design principles for Erlang programs. since Erlang and OTP are closely interconnected the term Erlang/OTP is normally used instead of OTP.
+
 </details>
-<details>
-  <summary><strong>a common process</strong></summary><br>
+<details><summary><strong>a common process</strong></summary><br>
 
 in most processes, we had a function in charge of spawning the new process, a function in charge of giving it its initial values, a main loop, etc.
 
@@ -3149,8 +3123,7 @@ the engineers and computer scientists behind the OTP framework spotted these pat
 ![abstraction layers](./assets/abstraction_layers.png)
 
 </details>
-<details>
-  <summary><strong>basic server</strong></summary><br>
+<details><summary><strong>basic server</strong></summary><br>
 
 basic server would receive calls from the client, act on them and then reply to it if the protocol said to do so.
 
@@ -3184,22 +3157,21 @@ basic server would receive calls from the client, act on them and then reply to 
     -> ** exception error: no such process or port
            in function  kitty_server:close_shop/1 (code/otp/basic_server/kitty_server.erl, line 49)
 
-There are lots of similar patterns. For example both synchronous calls are extremely similar,  there is another pattern for asynchronous calls, and loops are also similar with our other process examples. Lets abstract all of theese similar patterns.
+There are lots of similar patterns. For example both synchronous calls are extremely similar, there is another pattern for asynchronous calls, and loops are also similar with our other process examples. Lets abstract all of theese similar patterns.
 
 > **see [my_server.erl](./code/otp/basic_server/my_server.erl) and [kitty_server2.erl](./code/otp/basic_server/kitty_server2.erl)**
 
 Many things are abstracted but usage is not changed.
 
 </details>
-<details>
-  <summary><strong>specific vs generic</strong></summary><br>
+<details><summary><strong>specific vs generic</strong></summary><br>
 
 this is what OTP really is all about: taking all the **generic** components, extracting them in libraries, making sure they work well and then reusing that code when possible. then all that's left to do is focus on the **specific** stuff, things that will always change from application to application.
 
 this separation is good for a couple of things, such as complexity, testing, bug fixing, etc.
+
 </details>
-<details>
-  <summary><strong>gen_server</strong></summary><br>
+<details><summary><strong>gen_server</strong></summary><br>
 
 **`gen_server`** is an `OTP` behaviour module for implementing the server of a client-server relation. it stands for **Generic Server**, and it’s basically an interface to build processes that behaves like a server. every module that implements it will have a standard set of interface functions.
 
@@ -3224,7 +3196,7 @@ this separation is good for a couple of things, such as complexity, testing, bug
 
     -                     -----> Module:code_change/3
 
-# interface functions
+# callbacks
 
 ## init
 
@@ -3251,21 +3223,21 @@ while `init/1` is running, execution is blocked in the process that spawned the 
 
 to reply messages there are 8 different return values possible, taking the form of tuples.
 
-  - `{reply,Reply,NewState}`
-  - `{reply,Reply,NewState,Timeout}`
-  - `{reply,Reply,NewState,hibernate}`
-  - `{noreply,NewState}`
-  - `{noreply,NewState,Timeout}`
-  - `{noreply,NewState,hibernate}`
-  - `{stop,Reason,Reply,NewState}`
-  - `{stop,Reason,NewState}`
+- `{reply,Reply,NewState}`
+- `{reply,Reply,NewState,Timeout}`
+- `{reply,Reply,NewState,hibernate}`
+- `{noreply,NewState}`
+- `{noreply,NewState,Timeout}`
+- `{noreply,NewState,hibernate}`
+- `{stop,Reason,Reply,NewState}`
+- `{stop,Reason,NewState}`
 
 for all of these;
 
-  - `Timeout` and `hibernate` work the same way as for `init/1`
-  - `Reply` will be sent back to whoever called the server
-  - when you use `noreply`, the generic part of the server will assume you're taking care of sending the reply back yourself.
-    - this can be done with `gen_server:reply/2`, which has signature `From, Reply`
+- `Timeout` and `hibernate` work the same way as for `init/1`
+- `Reply` will be sent back to whoever called the server
+- when you use `noreply`, the generic part of the server will assume you're taking care of sending the reply back yourself.
+  - this can be done with `gen_server:reply/2`, which has signature `From, Reply`
 
 ## handle_cast
 
@@ -3273,10 +3245,10 @@ for all of these;
 
 since this is an asynchronous flow, only tuples without replies are valid return values:
 
- - {noreply,NewState}
- - {noreply,NewState,Timeout}
- - {noreply,NewState,hibernate}
- - {stop,Reason,NewState}
+- {noreply,NewState}
+- {noreply,NewState,Timeout}
+- {noreply,NewState,hibernate}
+- {stop,Reason,NewState}
 
 ## handle_info
 
@@ -3296,24 +3268,27 @@ this function is pretty much the direct opposite of `init/1` so whatever was don
 
 `code_change/3` is there to let you upgrade code. takes the form `code_change(PreviousVersion, State, Extra)`.
 
-  - **`PreviousVersion`** is either
-    - the `version term itself` in the case of an upgrade (see modules),
-    - `{down, Version}` in the case of a downgrade (just reloading older code).
-  - **`State`** variable holds all of the current's server state so you can convert it.
-    - after you done converting the state just retrun `{ok, NewState}`.
-  - **`Extra`** variable is mostly used in larger OTP deployment, where specific tools exist to upgrade entire releases on a VM.
+- **`PreviousVersion`** is either
+  - the `version term itself` in the case of an upgrade (see modules),
+  - `{down, Version}` in the case of a downgrade (just reloading older code).
+- **`State`** variable holds all of the current's server state so you can convert it.
+  - after you done converting the state just retrun `{ok, NewState}`.
+- **`Extra`** variable is mostly used in larger OTP deployment, where specific tools exist to upgrade entire releases on a VM.
 
 # methods
 
 > see [full list](https://erldocs.com/maint/stdlib/gen_server.html)
 
-  - **`gen_server:start_link(Module, Args, Options) -> Result`**
-    - first parameter is the callback module. second one is the list of parameters to pass to `init/1`. third one is about debugging options.
-  - **`gen_server:start_link(ServerName, Module, Args, Options) -> Result`**
-    - first one will be the name to register the server with. note that while the previous version of the function simply returned a `pid`, this one instead returns `{ok, Pid}`.
-  - **`call(ServerRef, Request) -> Reply`**
-  - **`call(ServerRef, Request, Timeout) -> Reply`**
-    - if you don't give a `Timeout` to the function (or the atom `infinity`), the default is set to `5 seconds`. if no reply is received before time is up, the call crashes.
+- **`gen_server:start_link(Module, Args, Options) -> Result`**
+  - first parameter is the callback module. second one is the list of parameters to pass to `init/1`. third one is about debugging options.
+- **`gen_server:start_link(ServerName, Module, Args, Options) -> Result`**
+  - first one will be the name to register the server with. note that while the previous version of the function simply returned a `pid`, this one instead returns `{ok, Pid}`.
+- **`gen_server:call(ServerRef, Request) -> Reply`**
+- **`gen_server:call(ServerRef, Request, Timeout) -> Reply`**
+  - **makes a synchronous call** to the `ServerRef` of the `gen_server` process by sending a request and waiting until a reply arrives or a time-out occurs. the `gen_server` process calls `Module:handle_call/3` to handle the request.
+  - if you don't give a `Timeout` to the function (or the atom `infinity`), the default is set to `5 seconds`. if no reply is received before time is up, the call crashes.
+- **`gen_server:cast(ServerRef, Request) -> ok`**
+  - **sends an asynchronous request** to the `ServerRef` of the `gen_server` process and returns `ok` immediately, ignoring if the destination node or `gen_server` process does not exist. the `gen_server` process calls `Module:handle_cast/2` to handle the request.
 
 # example
 
@@ -3322,8 +3297,7 @@ this function is pretty much the direct opposite of `init/1` so whatever was don
 this could be tested in the same way used in `basic_server` section.
 
 </details>
-<details>
-  <summary><strong>behaviour</strong></summary><br>
+<details><summary><strong>behaviour</strong></summary><br>
 
 a behaviour is basically a way for a module to specify functions it expects another module to have. the behaviour is the contract sealing the deal between the well-behaved generic part of the code and the specific, error-prone part of the code (yours).
 
@@ -3341,9 +3315,18 @@ defining your own behaviours is really simple. you just need to export a functio
     behaviour_info(_) -> undefined.
 
 you can just use `-behaviour(my_behaviour).` in a module implementing them to get compiler warnings if you forgot a function.
+
 </details>
-<details>
-  <summary><strong>finite-state machines</strong></summary><br>
+<details><summary><strong>sync vs async</strong></summary><br>
+
+in this context, being sync or async means **waiting or not waiting a response after sending the message, before continuing**.
+
+if you're sending a sync message for example with **`call`**, this means you're waiting a response before going to next step. **this does not mean** server will complete its thing right away. server can easily response with `ok` and do its thing afterwards and then send you message with message passing. but you will wait for the response or for the timeout. if process is down, or too busy with other messages, you will know in your `after` block.
+
+in the other hand, sending an async message, for example with **`cast`**, means you dont care about the response at all, its like **fire and forget**. the handler wont even know who you are and can't give you any response even if it wants to.
+
+</details>
+<details><summary><strong>finite-state machines</strong></summary><br>
 
 a finite-state machine (FSM) is a virtual machine which does have a finite number of states.
 
@@ -3407,13 +3390,103 @@ a finite-state machine (FSM) is a virtual machine which does have a finite numbe
     -> Dog says: BARK! BARK!
 
 </details>
+<details><summary><strong>gen_fsm</strong></summary><br>
+
+the `gen_fsm` behaviour is somewhat similar to `gen_server` in that it is a specialised version of it. the biggest difference is that **rather than handling calls and casts, we're handling synchronous and asynchronous events**. each state is represented by a function.
+
+# callbacks
+
+## init
+
+same `init/1` as used for generic servers, except the return values accepted are;
+
+- `{ok, StateName, Data}`
+- `{ok, StateName, Data, Timeout}`
+- `{ok, StateName, Data, hibernate}`
+- `{stop, Reason}`
+
+- `stop` tuple works in the same manner as for `gen_server`s,
+- `hibernate` and `Timeout` keep the same semantics.
+- `StateName` is an atom and represents the **next callback function** to be called.
+
+## StateName
+
+- functions `StateName/2` and `StateName/3` are placeholder names and you are to decide what they will be. there's no limit on how many of these functions you can have.
+
+**`StateName/2`:**<br>
+- called for **asynchronous** events
+- in order arguments are;
+  - `Event`, the actual message sent as an event
+  - `StateData`, the data that was carried over the calls
+- can return;
+  - `{next_state, NextStateName, NewStateData}`
+  - `{next_state, NextStateName, NewStateData, Timeout}`
+  - `{next_state, NextStateName, NewStateData, hibernate}`
+  - `{stop, Reason, NewStateData}`
+
+**`StateName/3`:**<br>
+- called for **synchronous** events
+- in order arguments are;
+  - `Event`, the actual message sent as an event
+  - `From`, a tuple contains sender info, formed as `{Pid, Ref}`
+  - `StateData`, the data that was carried over the calls
+- can return;
+  - `{reply, Reply, NextStateName, NewStateData}`
+  - `{reply, Reply, NextStateName, NewStateData, Timeout}`
+  - `{reply, Reply, NextStateName, NewStateData, hibernate}`
+  - `{next_state, NextStateName, NewStateData}`
+  - `{next_state, NextStateName, NewStateData, Timeout}`
+  - `{next_state, NextStateName, NewStateData, hibernate}`
+  - `{stop, Reason, Reply, NewStateData}`
+  - `{stop, Reason, NewStateData}`
+
+## handle_event
+
+`handle_event/3` callback is for handling global events that would trigger a specific reaction no matter what state we're in.
+
+- returns the same values as `StateName/2`
+- in order arguments are;
+  - `Event`, the actual message sent as an event
+  - `StateName`, the state fsm in when event is received
+  - `StateData`, the data that was carried over the calls
+
+## handle_sync_event
+
+`handle_sync_event/4` is same as `handle_event/3` for handling synchronous global events.
+
+- returns the same kind of tuples as `StateName/3`.
+- in order arguments are;
+  - `Event`, the actual message sent as an event
+  - `From`, a tuple contains sender info, formed as `{Pid, Ref}`
+  - `StateName`, the state fsm in when event is received
+  - `StateData`, the data that was carried over the calls
+
+## code_change
+
+works exactly the same as it did for `gen_server`s except that it takes an extra state parameter when called like `code_change(OldVersion, StateName, Data, Extra)`, and returns a tuple of the form `{ok, NextStateName, NewStateData}`
+
+## terminate
+
+act a bit like what we have for generic servers. `terminate/3` should do the opposite of `init/1`
+
+# global events
+
+how we know whether an event is global or if it's meant to be sent to a specific state. to determine this we can look at the function used to send an event to the FSM.
+
+event type | send with | handler
+---|---|---
+normal async|`send_event/2`|`StateName/3`
+normal sync|`sync_send_event/2-3`|`StateName/2`
+global async|`send_all_state_event/2`|`handle_event`
+global sync|`sync_send_all_state_event/2-3`|`handle_sync_event/4`
+
+</details>
 
 ***
 
 # Projects
 
-<details>
-  <summary><strong>remainder</strong></summary><br>
+<details><summary><strong>remainder</strong></summary><br>
 
 > for full explanation see [tutorial](https://learnyousomeerlang.com/designing-a-concurrent-application) and for complete code see [remainder](./code/projects/remainder)
 
@@ -3602,8 +3675,7 @@ to make our application `clash free` modules should be renamed to `reminder_evse
 ***
 
 # Definitions
-<details>
-  <summary><strong>imparative, declarative, procedural, functional</strong></summary><br>
+<details><summary><strong>imparative, declarative, procedural, functional</strong></summary><br>
 
 for all programming paradigms see [wikipedia](https://en.wikipedia.org/wiki/Programming_paradigm). also see [comparison between paradigms](https://en.wikipedia.org/wiki/Comparison_of_programming_paradigms).
 
@@ -3661,24 +3733,22 @@ functional programming is also key to some languages that have found success in 
 in practice, these two concepts tend to align, but it is entirely possible to write `an expression involving composition of pure functions that describe an explicit process to perform a computation` (**functional, but not declarative**), and it is possible to write `sequential, impure, code that describes constraints on an intended result rather than a process for obtaining it` (**declarative, but not functional**).
 
 </details>
-<details>
-  <summary><strong>referential transparency</strong></summary><br>
+<details><summary><strong>referential transparency</strong></summary><br>
 
 an expression is called referentially transparent if it can be replaced with its corresponding value without changing the program's behavior. This requires that the expression be pure, that is to say the expression value must be the same for the same inputs and its evaluation must have no side effects. An expression that is not referentially transparent is called referentially opaque.
+
 </details>
-<details>
-  <summary><strong>arity</strong></summary><br>
+<details><summary><strong>arity</strong></summary><br>
 
 the arity of a function is an integer representing how many arguments can be passed to the function.
+
 </details>
-<details>
-  <summary><strong>code hot-loading</strong></summary><br>
+<details><summary><strong>code hot-loading</strong></summary><br>
 
 upgrading an application while it runs, without stopping it
-</details>
 
-<details>
-  <summary><strong>hard, firm, and soft real-time</strong></summary><br>
+</details>
+<details><summary><strong>hard, firm, and soft real-time</strong></summary><br>
 
 ## hard real-time
 hard real-time definition considers any missed deadline to be a system failure. This scheduling is used extensively in mission critical systems where failure to conform to timing constraints results in a loss of life or property.
@@ -3703,10 +3773,9 @@ soft real-time definition allows for frequently missed deadlines, and as long as
 - A video game console runs software for a game engine. There are many resources that must be shared between its tasks. At the same time tasks need to be completed according to the schedule for the game to play correctly. As long as tasks are being completely relatively on time the game will be enjoyable, and if not it may only lag a little.
 
 [resource](https://stackoverflow.com/a/30498130)
-</details>
 
-<details>
-  <summary><strong>statically/dynamically strongly/weakly typed</strong></summary><br>
+</details>
+<details><summary><strong>statically/dynamically strongly/weakly typed</strong></summary><br>
 
 *there is no universally accepted definition of what these terms mean*
 
@@ -3720,9 +3789,9 @@ soft real-time definition allows for frequently missed deadlines, and as long as
 
 ![languages by type system chart](./assets/type_dynamic_static_strong_weak.png)
 [resource](https://android.jlelse.eu/magic-lies-here-statically-typed-vs-dynamically-typed-languages-d151c7f95e2b)
+
 </details>
-<details>
-  <summary><strong>recursions and recursive functions</strong></summary><br>
+<details><summary><strong>recursions and recursive functions</strong></summary><br>
 
 `recursion` is a way of programming or coding a problem, in which a function calls itself one or more times in its body. usually, it is returning the return value of this function call. if a function definition fulfils the condition of recursion, we call this function a `recursive` function.
 
@@ -3730,16 +3799,16 @@ soft real-time definition allows for frequently missed deadlines, and as long as
 a recursive function has to terminate to be used in a program. a recursive function terminates, if with every recursive call the solution of the problem is downsized and moves towards a `base case`. a base case is a case, where the problem can be solved without further recursion. a recursion can lead to an infinite loop, if the base case is not met in the calls.
 
 [resource](https://www.python-course.eu/recursive_functions.php)
+
 </details>
-<details>
-  <summary><strong>scope and closure</strong></summary><br>
+<details><summary><strong>scope and closure</strong></summary><br>
 
   **scope** defines what variables you have access to.
 
   whenever you create a function within another function, you have created a **closure**. the inner function is the closure. this closure is usually returned so you can use the outer function’s variables at a later time.
+
 </details>
-<details>
-  <summary><strong>variable shadowing</strong></summary><br>
+<details><summary><strong>variable shadowing</strong></summary><br>
 
 **shadowing** is the term used to describe the act of defining a new variable that has the same name as one that was in the parent scope.
 
@@ -3752,8 +3821,7 @@ a recursive function has to terminate to be used in a program. a recursive funct
     -> 2
 
 </details>
-<details>
-  <summary><strong>serial, parallel, sequential, and concurrent</strong></summary><br>
+<details><summary><strong>serial, parallel, sequential, and concurrent</strong></summary><br>
 
 **concurrency** means, essentially, that `task A` and `task B` both need to happen independently of each other.
 
@@ -3766,9 +3834,9 @@ concurrent statements can be parallelized but sequential statements cannot be pa
 **resources:**
 - [stackexchange concurrent vs parallel](https://softwareengineering.stackexchange.com/questions/190719/the-difference-between-concurrent-and-parallel-execution)
 - [blogspot serial vs parallel vs concurrent vs sequential](http://s1l3n0.blogspot.com/2013/04/serial-vs-parallel-sequential-vs.html)
+
 </details>
-<details>
-  <summary><strong>symmetric and asymmetric multiprocessing</strong></summary><br>
+<details><summary><strong>symmetric and asymmetric multiprocessing</strong></summary><br>
 
 ![multiprocessing symmetric vs asymmetric](./assets/multiprocessing_symmetric_vs_asymmetric.jpg)
 
@@ -3793,16 +3861,16 @@ ease | is complex as all the processors need to be synchronized to maintain the 
 - [wikipedia symmetric multiprocessing](https://en.wikipedia.org/wiki/Symmetric_multiprocessing)
 - [wikipedia asymmetric multiprocessing](https://en.wikipedia.org/wiki/Asymmetric_multiprocessing)
 - [techdifferences symmetric vs asymmetric-multiprocessing](https://techdifferences.com/difference-between-symmetric-and-asymmetric-multiprocessing.html)
+
 </details>
-<details>
-  <summary><strong>scalability, fault-tolerance</strong></summary><br>
+<details><summary><strong>scalability, fault-tolerance</strong></summary><br>
 
 **scalability** is the property of a system to handle a growing amount of work by adding resources to the system.
 
 **fault-tolerance** is the property that enables a system to continue operating properly in the event of the failure of (or one or more faults within) some of its components.
+
 </details>
-<details>
-  <summary><strong>lock, mutex, and semaphore</strong></summary><br>
+<details><summary><strong>lock, mutex, and semaphore</strong></summary><br>
 
 a **lock** allows only one thread to enter the part that's locked and the lock is not shared with any other processes.
 
@@ -3827,14 +3895,14 @@ is the number of free identical toilet keys. example, say we have four toilets w
 officially: "a semaphore restricts the number of simultaneous users of a shared resource up to a maximum number. threads can request access to the resource (decrementing the semaphore), and can signal that they have finished using the resource (incrementing the semaphore)." *Ref: Symbian Developer Library*
 
 [resource](http://niclasw.mbnet.fi/MutexSemaphore.html), [mirror](https://stackoverflow.com/questions/62814/difference-between-binary-semaphore-and-mutex/346678#346678)
+
 </details>
-<details>
-  <summary><strong>idiomatic code</strong></summary><br>
+<details><summary><strong>idiomatic code</strong></summary><br>
 
 **idiomatic code** means following the conventions of the language. you should find the easiest and most common ways of accomplishing a task rather than porting your knowledge from a different language.
+
 </details>
-<details>
-  <summary><strong>argument vs parameter</strong></summary><br>
+<details><summary><strong>argument vs parameter</strong></summary><br>
 
 **parameter** is variable in the declaration of function.
 
