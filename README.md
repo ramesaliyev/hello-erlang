@@ -3325,6 +3325,8 @@ if you're sending a sync message for example with **`call`**, this means you're 
 
 in the other hand, sending an async message, for example with **`cast`**, means you dont care about the response at all, its like **fire and forget**. the handler wont even know who you are and can't give you any response even if it wants to.
 
+**a side note:** avoid synchronous calls as much as possible when two identical processes communicating with each other. because they can stuck in same state where they are both waiting a response from the other one and cause a *deadlock*.
+
 </details>
 <details><summary><strong>finite-state machines</strong></summary><br>
 
@@ -3671,6 +3673,25 @@ subscribe to events;<br>
 to make our application `clash free` modules should be renamed to `reminder_evserv`, `reminder_sup` and `reminder_event`.
 
 </details>
+<details><summary><strong>game trading</strong></summary><br>
+
+> for full explanation see [tutorial](https://learnyousomeerlang.com/finite-state-machines) and for complete code see [game trading](./code/projects/game_trading)
+
+actions in game;
+- ask for a trade
+- accept a trade
+- offer items
+- retract an offer
+- declare self as ready
+- brutally cancel the trade
+
+trading communication between FSMs;
+![fsm talking to each other](./assets/project_game_trading/fsm_overview.png)
+
+FSM state diagram;
+![fsm state diagram](./assets/project_game_trading/fsm_state_diagram.png)
+
+</details>
 
 ***
 
@@ -3911,6 +3932,26 @@ officially: "a semaphore restricts the number of simultaneous users of a shared 
 **argument** is the actual value of this variable that gets passed to function.
 
     function(argument_1, argument_2).
+
+</details>
+<details><summary><strong>two-phase commit protocol</strong></summary><br>
+
+**`coordinator`**
+- `multicast` => `ok to commit?`
+  - `collect replies`
+    - `all ok` => `send commit`
+    - `else` => `send abort`
+
+**`participant`**
+- `ok to commit` =>
+  - `save to temp area`
+  - `reply ok`
+- `commit` =>
+  - `make change permanent`
+- `abort` =>
+  - `delete temp area`
+
+[educative](https://www.educative.io/edpresso/what-is-the-two-phase-commit-protocol), [shekhargulati](https://shekhargulati.com/2018/09/05/two-phase-commit-protocol/)
 
 </details>
 
