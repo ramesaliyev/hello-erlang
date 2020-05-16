@@ -3477,10 +3477,14 @@ how we know whether an event is global or if it's meant to be sent to a specific
 
 event type | send with | handler
 ---|---|---
-normal async|`send_event/2`|`StateName/3`
-normal sync|`sync_send_event/2-3`|`StateName/2`
-global async|`send_all_state_event/2`|`handle_event`
+normal async|`send_event/2`|`StateName/2`
+normal sync|`sync_send_event/2-3`|`StateName/3`
+global async|`send_all_state_event/2`|`handle_event/3`
 global sync|`sync_send_all_state_event/2-3`|`handle_sync_event/4`
+
+# example
+
+> **see [game trading](./code/projects/game_trading)** project code, and check further explanation under projects section.
 
 </details>
 
@@ -3677,19 +3681,7 @@ to make our application `clash free` modules should be renamed to `reminder_evse
 
 > for full explanation see [tutorial](https://learnyousomeerlang.com/finite-state-machines) and for complete code see [game trading](./code/projects/game_trading)
 
-actions in game;
-- ask for a trade
-- accept a trade
-- offer items
-- retract an offer
-- declare self as ready
-- brutally cancel the trade
 
-trading communication between FSMs;
-![fsm talking to each other](./assets/project_game_trading/fsm_overview.png)
-
-FSM state diagram;
-![fsm state diagram](./assets/project_game_trading/fsm_state_diagram.png)
 
 </details>
 
