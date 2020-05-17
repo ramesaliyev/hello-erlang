@@ -3681,7 +3681,8 @@ to make our application `clash free` modules should be renamed to `reminder_evse
 
 > for full explanation see [tutorial](https://learnyousomeerlang.com/finite-state-machines) and for complete code see [game trading](./code/projects/game_trading)
 
-
+check example FSM [events diagram](./assets/project_game_trading/fsm_diagram.pdf) and
+[tests](./code/projects/game_trading/src/trade_test.erl) for better understanding.
 
 </details>
 

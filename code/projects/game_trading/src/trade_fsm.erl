@@ -189,6 +189,7 @@ idle(Event, _From, Data) ->
 
 %% IDLE_WAIT
 %%% async from other FSM
+%% this is to handle race condition
 idle_wait({ask_negotiate, OtherPid}, S=#state{other=OtherPid}) ->
   gen_fsm:reply(S#state.from, ok),
   notice(S, "starting negotiation", []),
@@ -211,7 +212,7 @@ idle_wait(Event, _From, Data) ->
   {next_state, idle_wait, Data}.
 
 %% NEGOTIATE
-%%% async fsm to fsm
+%%% async fsm to fsm, or from user async
 negotiate({make_offer, Item}, S=#state{ownitems=OwnItems}) ->
   do_offer(S#state.other, Item),
   notice(S, "offering ~p", [Item]),
