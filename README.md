@@ -3487,6 +3487,33 @@ global sync|`sync_send_all_state_event/2-3`|`handle_sync_event/4`
 > **see [game trading](./code/projects/game_trading)** project code, and check further explanation under projects section.
 
 </details>
+<details><summary><strong>gen_event</strong></summary><br>
+
+an **event manager**, simply takes a process which accepts functions and lets them run on any incoming event.
+
+advantages and downsides of using an event manager;
+- advantages:
+  - events are only forwarded once, so server may has many subscribers
+  - data transfer only done once and all callbacks operate on that same instance of the data
+  - eliminates need to spawn processes for short lived tasks
+- downsides
+  - long running functions going to block each other
+  - a function that loops indefinitly can prevent any new event from being handled
+
+to solve these downsides, you have to turn the event manager approach into the subscriber one.
+
+`gen_event` behaviour basically runs the process that accepts and calls functions, and you only provide a module with these functions. it differs quite a bit from the `gen_server` and `gen_fsm` behaviours in that you are never really starting a process.
+
+## init and terminate
+
+similar to `gen_server` and `gen_fsm`.
+- `init/1`
+  - takes a list of arguments
+  - returns `{ok, State}`
+- `terminate/2`
+  - direct opposite of `init/1`
+
+</details>
 
 ***
 
