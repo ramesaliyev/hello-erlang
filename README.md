@@ -3489,7 +3489,11 @@ global sync|`sync_send_all_state_event/2-3`|`handle_sync_event/4`
 </details>
 <details><summary><strong>gen_event</strong></summary><br>
 
-an **event manager**, simply takes a process which accepts functions and lets them run on any incoming event.
+**event manager** is a process, which can have **event handlers** and can receive events. these event handlers are simply modules which implements `gen_event` behavior. when the event manager is notified about an event, it will be processed by all installed handlers. after spawning `gen_event` manager and installing handlers on it, handlers exist in the same process as the manager.
+
+issues with this approach are;
+- handlers are not executed concurrently
+- therefore long running functions going to block each other
 
 advantages and downsides of using an event manager;
 - advantages:
