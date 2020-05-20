@@ -3492,21 +3492,22 @@ global sync|`sync_send_all_state_event/2-3`|`handle_sync_event/4`
 **event manager** is a process, which can have **event handlers** and can receive events. these event handlers are simply modules which implements `gen_event` behavior. when the event manager is notified about an event, it will be processed by all installed handlers. after spawning `gen_event` manager and installing handlers on it, handlers exist in the same process as the manager.
 
 issues with this approach are;
-- handlers are not executed concurrently
+- same process for all handlers, therefore handlers are not executed concurrently
 - therefore long running functions going to block each other
+- a function that loops indefinitly can prevent any new event from being handled
 
-advantages and downsides of using an event manager;
-- advantages:
-  - events are only forwarded once, so server may has many subscribers
-  - data transfer only done once and all callbacks operate on that same instance of the data
-  - eliminates need to spawn processes for short lived tasks
-- downsides
-  - long running functions going to block each other
-  - a function that loops indefinitly can prevent any new event from being handled
+good sides of this approach are;
+- data transfer only done once and all callbacks operate on that same instance of the data
+- eliminates need to spawn processes for short lived tasks
 
-to solve these downsides, you have to turn the event manager approach into the subscriber one.
+this pattern is mostly not recommended. it is not even widely used in the Erlang core libraries and platform itself.
 
-`gen_event` behaviour basically runs the process that accepts and calls functions, and you only provide a module with these functions. it differs quite a bit from the `gen_server` and `gen_fsm` behaviours in that you are never really starting a process.
+to solve mentioned downsides, you have to turn the event manager approach into the subscriber one.
+
+- standard `spawn -> init -> loop -> terminate` pattern will be applied to event handlers
+- each event handler can hold its own state, carried around by the manager for them
+
+# callbacks
 
 ## init and terminate
 
@@ -3516,6 +3517,55 @@ similar to `gen_server` and `gen_fsm`.
   - returns `{ok, State}`
 - `terminate/2`
   - direct opposite of `init/1`
+
+## handle_event
+
+`handle_event(Event, State)` handles incoming events from methods that mentioned below and works **asynchronously**, like `gen_server`'s `handle_cast/2`.
+
+- incoming events can come from `gen_event:notify/2` which is asynchronous like `gen_server:cast/2` is.
+- there is also `gen_event:sync_notify/2` which works synchronously **while** `handle_event/2` remains asynchronous. idea here is that the function call only returns once all event handlers have seen and treated the new message. until then, the event manager will keep blocking the calling process by not replying.
+
+can return followings;
+- `{ok, NewState}`
+  - simply updates its own state and doesn't reply to anyone
+- `{ok, NewState, hibernate}
+  - whole event manager is going to be put in hibernation
+  - (since event handlers run in the same process as their manager)
+- `remove_handler`
+  - drops the handler from the manager.
+  - useful when event handler knows its done and it has nothing else to do.
+- `{swap_handler, Args1, NewState, NewHandler, Args2}`
+  - removes the current event handler and replaces it with a new one.
+  - this is done by first calling `CurrentHandler:terminate(Args1, NewState)` and removing the current handler
+  - then adding a new one by calling `NewHandler:init(Args2, ResultFromTerminate)`
+  - useful when you know some specific event happened and you're better of giving control to a new handler.
+
+## handle_call
+
+`handle_call(Event, State)` handles incoming events from `gen_event:call/3-4` function and works **synchronously**, like `gen_server`'s `handle_call/2`.
+
+can return followings;
+- `{ok, Reply, NewState}`
+- `{ok, Reply, NewState, hibernate}`
+- `{remove_handler, Reply}`
+- `{swap_handler, Reply, Args1, NewState, Handler2, Args2}`
+
+this raise a question. what happens if we have like 15 handlers? which one going to reply us when we use `gen_event:call/3-4`? this is defined at the time when we add the event handlers with `gen_event:add_handler/3`. see example below.
+
+## handle_info
+
+`handle_info/2` is pretty much the same as `handle_event` (same return values and everything), with the exception that it only treats out of band messages, such as `exit signals`, messages sent directly to the event manager with the `!` operator, etc. it has use cases similar to those of `handle_info` in `gen_server` and in `gen_fsm`.
+
+## code_change
+
+works in exactly the same manner as it does for `gen_server`s, except it's for each individual event handler.
+
+- takes 3 arguments
+  - `OldVsn`, the version number
+  - `State`, the current handler's state
+  - `Extra`
+- returns
+  - `{ok, NewState}`
 
 </details>
 
