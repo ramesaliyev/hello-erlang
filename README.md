@@ -3567,6 +3567,36 @@ works in exactly the same manner as it does for `gen_server`s, except it's for e
 - returns
   - `{ok, NewState}`
 
+# functions
+
+> see example section for usages of mentioned functions
+
+## start_link
+
+spawn a new event manager process
+
+## add_handler
+
+used for adding an event handler (a module which implements the `gen_event` behavior) to the event manager.
+
+when you want to call, add or delete a specific event handler when there's *more than one instance of it*, you'll have to find a way to uniquely identify it. one way of doing it is to just use `make_ref()` as a unique value. to give this value to the handler, you add it by calling `add_handler/3` as `gen_event:add_handler(Pid, {Module, Ref}, Args)`. then, you can use `{Module, Ref}` to talk to that specific handler. (further investigation and explanation needed for this!)
+
+## delete_handler
+
+removes an event hanler from event manager.
+
+## notify
+
+send an event which will be handled in `handle_event` asynchronously.
+
+## call
+
+send an event which will be handled in `handle_call` synchronously.
+
+# example
+
+> **see [curling](./code/projects/curling)** project code, and check further explanation under projects section.
+
 </details>
 
 ***
@@ -3764,6 +3794,54 @@ to make our application `clash free` modules should be renamed to `reminder_evse
 
 check example FSM [events diagram](./assets/project_game_trading/fsm_diagram.pdf) and
 [tests](./code/projects/game_trading/src/trade_test.erl) for better understanding.
+
+</details>
+<details><summary><strong>curling</strong></summary><br>
+
+> for full explanation see [tutorial](https://learnyousomeerlang.com/event-handlers) and for complete code see [curling](./code/projects/curling)
+
+using directly
+
+    {ok, EventManager} = gen_event:start_link().
+    -> {ok,<0.98.0>}
+
+    gen_event:add_handler(EventManager, curling_scoreboard, []).
+    -> ok
+
+    gen_event:notify(EventManager, {set_teams, "Pirates", "Scotsmen"}).
+    -> Scoreboard: Team Pirates vs. Team Scotsmen
+    -> ok
+
+    gen_event:notify(EventManager, {add_points, "Pirates", 3}).
+    -> Scoreboard: increased score of team Pirates by 1
+    -> ok
+    -> Scoreboard: increased score of team Pirates by 1
+    -> Scoreboard: increased score of team Pirates by 1
+
+    gen_event:notify(EventManager, next_round).
+    -> Scoreboard: round over
+    -> ok
+
+    gen_event:delete_handler(EventManager, curling_scoreboard, turn_off).
+    -> ok
+
+    gen_event:notify(EventManager, next_round).
+    -> ok
+
+using over API
+
+    {ok, EventManager2} = curling:start_link("Pirates", "Scotsmen").
+    -> Scoreboard: Team Pirates vs. Team Scotsmen
+    -> {ok,<0.111.0>}
+
+    curling:add_points(EventManager2, "Scotsmen", 2).
+    -> Scoreboard: increased score of team Scotsmen by 1
+    -> ok
+    -> Scoreboard: increased score of team Scotsmen by 1
+
+    curling:next_round(EventManager2).
+    -> Scoreboard: round over
+    -> ok
 
 </details>
 
