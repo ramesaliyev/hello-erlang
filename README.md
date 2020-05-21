@@ -3579,7 +3579,22 @@ spawn a new event manager process
 
 used for adding an event handler (a module which implements the `gen_event` behavior) to the event manager.
 
-when you want to call, add or delete a specific event handler when there's *more than one instance of it*, you'll have to find a way to uniquely identify it. one way of doing it is to just use `make_ref()` as a unique value. to give this value to the handler, you add it by calling `add_handler/3` as `gen_event:add_handler(Pid, {Module, Ref}, Args)`. then, you can use `{Module, Ref}` to talk to that specific handler. (further investigation and explanation needed for this!)
+`add_handler(EventMgrRef, Handler, Args) -> Result`
+- `EventMgrRef` is `pid` of event manager
+- `Handler` is the event handler module which implements `gen_event behavior`, also can be unique identifier tuple. (see below)
+- `Args` is any term that is passed as the argument to `Module:init/1`.
+
+when you want to call, add or delete a specific event handler when there's *more than one instance of it*, you'll have to find a way to uniquely identify it. one way of doing it is to just use `make_ref()` as a unique value. to give this value to the handler, you add it by calling `add_handler/3` as `gen_event:add_handler(Pid, {Module, Ref}, Args)`. then, you can use `{Module, Ref}` to talk to that specific handler. (see curling project for example usage)
+
+## add_sup_handler
+
+same as `add_handler` but a link is set up between your process and the event manager so both of them are supervised and the handler knows if its parent process fails.
+
+- **when caller process crashes**: the supervised event handler is terminated with the call to `YourModule:terminate({stop, Reason}, State))`
+- **when event handler itself crashes** (but not the event manager): caller process will receive `{gen_event_EXIT, HandlerId, Reason}`.
+- **when the event manager is shut down** though, caller process will either:
+  - receive the `{gen_event_EXIT, HandlerId, Reason}` message then crash because you're not trapping exits;
+  - receive the `{gen_event_EXIT, HandlerId, Reason}` message, then a standard `EXIT`.
 
 ## delete_handler
 
@@ -3842,6 +3857,62 @@ using over API
     curling:next_round(EventManager2).
     -> Scoreboard: round over
     -> ok
+
+using with message passing approach
+
+    {ok, EventManager} = curling:start_link("Team1", "Team2").
+    -> Scoreboard: Team Team1 vs. Team Team2
+    -> {ok,<0.83.0>}
+
+    HandlerId = curling:join_feed(EventManager, self()).
+    -> {curling_feed,#Ref<0.1642873732.1456734217.1329>}
+
+    curling:add_points(EventManager, "Team1", 2).
+    -> Scoreboard: increased score of team Team1 by 1
+    -> Scoreboard: increased score of team Team1 by 1
+    -> ok
+
+    flush().
+    -> Shell got {curling_feed,{add_points,"Team1",2}}
+    -> ok
+
+    curling:leave_feed(EventManager, HandlerId).
+    -> ok
+
+    curling:next_round(EventManager).
+    -> Scoreboard: round over
+    -> ok
+
+    flush().
+    -> ok
+
+taking advantage of accumulator
+
+    {ok, EventManager} = curling:start_link("Pigeons", "Eagles").
+    -> Scoreboard: Team Pigeons vs. Team Eagles
+    -> {ok,<0.81.0>}
+
+    curling:add_points(EventManager, "Pigeons", 2).
+    -> Scoreboard: increased score of team Pigeons by 1
+    -> ok
+    -> Scoreboard: increased score of team Pigeons by 1
+
+    curling:next_round(EventManager).
+    -> Scoreboard: round over
+    -> ok
+
+    curling:add_points(EventManager, "Eagles", 3).
+    -> Scoreboard: increased score of team Eagles by 1
+    -> ok
+    -> Scoreboard: increased score of team Eagles by 1
+    -> Scoreboard: increased score of team Eagles by 1
+
+    curling:next_round(EventManager).
+    -> Scoreboard: round over
+    -> ok
+
+    curling:game_info(EventManager).
+    -> {[{"Eagles",3},{"Pigeons",2}],{round,2}}
 
 </details>
 
@@ -4141,6 +4212,9 @@ officially: "a semaphore restricts the number of simultaneous users of a shared 
 
 ## Tools
 - [Erlang Performance Lab](https://github.com/erlanglab/erlangpl)
+
+## Todo
+- [ ] See and [error_logger](http://erlang.org/doc/man/error_logger.html) with `gen_event`
 
 ***
 
