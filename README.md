@@ -3613,6 +3613,164 @@ send an event which will be handled in `handle_call` synchronously.
 > **see [curling](./code/projects/curling)** project code, and check further explanation under projects section.
 
 </details>
+<details><summary><strong>supervisor</strong></summary><br>
+
+a behaviour module for implementing a `supervisor`, a process which supervises other processes called child processes. a child process can either be another supervisor or a worker process. worker processes are normally implemented using one of the `gen_event`, `gen_fsm`, or `gen_server` behaviours. a supervisor implemented using this module will have a standard set of interface functions and include functionality for tracing and error reporting. supervisors are used to build a hierarchical process structure called a supervision tree, a nice way to structure a fault tolerant application.
+
+every process should be supervised.
+
+supervisors can supervise workers and other supervisors, while workers should never be used in any position except under another supervisor:
+
+![supervision tree](./assets/sup_tree.png)
+
+whenever you want to terminate an application, you have the top supervisor of the VM shut down. then that supervisor asks each of its children to terminate. if some of the children are supervisors, they do the same. this gives you a well-ordered VM shutdown. supervisors also have a way to brutally kill the process.
+
+![supervision tree shutdown](./assets/sup_tree_shutdown.png)
+
+# callbacks
+
+## init
+
+whenever a supervisor is started using `supervisor:start_link/2,3`, this function is called by the new process to find out about restart strategy, maximum restart intensity, and child specifications.
+
+- takes `Args` which provided to the start function.
+- returns;
+  - `{ok, {{RestartStrategy, MaxRestart, MaxTime},[ChildSpecs]}}`
+    - `RestartStrategy` is one of;
+      - `one_for_one`
+      - `one_for_all`
+      - `rest_for_one`
+      - `simple_one_for_one`
+    - `MaxRestart` is a number (*see restart limits*)
+    - `MaxTime` is time in seconds (*see restart limits*)
+    - `ChildSpecs` is in form of;
+      - `{ChildId, StartFunc, Restart, Shutdown, Type, Modules}`
+      - *see child specifications*
+
+example return data;
+
+    {ok, {
+      {one_for_all, 5, 60},
+      [
+        {
+          fake_id,
+          {fake_mod, start_link, [SomeArg]},
+          permanent,
+          5000,
+          worker,
+          [fake_mod]
+        },
+        {
+          other_id,
+          {event_manager_mod, start_link, []},
+          transient,
+          infinity,
+          worker,
+          dynamic
+        }
+      ]
+    }}
+
+**update:** since version `18.0`, the supervisor structure can be provided as maps, of the form;
+
+    {
+      #{
+        strategy => RestartStrategy,
+        intensity => MaxRestart,
+        period => MaxTime
+      },
+      [
+        #{
+          id => ChildId,
+          start => StartFunc,
+          restart => Restart,
+          shutdown => Shutdown,
+          type => Type,
+          modules => Module
+        }
+      ]
+    }.
+
+## restart strategies
+
+### one_for_one
+
+when supervisor supervises many workers and **one of them fails, only that one should be restarted**.
+
+![one_for_one restart strategy](./assets/sup_restart_one_for_one.png)
+
+### one_for_all
+
+when supervisor supervises many workers and **one of them fails, all of them should be restarted**.
+
+![one_for_all restart strategy](./assets/sup_restart_one_for_all.png)
+
+### rest_for_one
+
+**if a process dies, all the ones that were started after it (depend on it) get restarted**, but not the other way around.
+
+![rest_for_one restart strategy](./assets/sup_restart_rest_for_one.png)
+
+### simple_one_for_one
+
+just sits around there, and it knows it can produce one kind of child only. whenever you want a new one, you ask for it and you get it. this kind of thing could theoretically be done with the standard `one_for_one` supervisor, but there are practical advantages to using the simple version.
+
+## restart limits
+
+if more than `MaxRestarts` happen within `MaxTime` (in seconds), the supervisor just gives up on your code, shuts it down then kills itself to never return (that's how bad it is). fortunately, that supervisor's supervisor might still have hope in its children and start them all over again.
+
+## child specifications
+
+structure;
+`{ChildId, StartFunc, Restart, Shutdown, Type, Modules}.`
+
+### ChildId
+
+`ChildId` is just an internal name used by the supervisor internally. any term can be used. useful for debug purposes, or when you get a list of all the children of a supervisor, etc.
+
+### StartFunc
+
+`StartFunc` is a tuple that tells how to start the child. in form of standard `{M,F,A}` format
+
+note that it is **very important that the starting function here is OTP-compliant and links to its caller when executed** (hint: use `gen_*:start_link()` wrapped in your own module, all the time).
+
+### Restart
+
+`Restart` tells the supervisor how to react when that particular child dies. This can take three values:
+
+- `permanent`
+  - means that **process should always be restarted**, no matter what.
+  - used for long-lived tasks
+- `temporary`
+  - means that **process should never be restarted**.
+  - used for short-lived tasks
+  - or tasks that expected to fail
+- `transient`
+  - this kind of process' are a bit of an in-between `permanent` and `temporary`. they're meant to run until they terminate normally and then they won't be restarted. however, if they die of abnormal causes (exit reason is anything but `normal`), they're going to be restarted.
+  - this restart option is often used for workers that need to succeed at their task, but won't be used after they do so.
+
+children of all three kinds can be mixed under a single supervisor. but this might affect the restart strategy: a `one_for_all` restart won't be triggered by a `temporary` process dying, but that `temporary` process might be restarted under the same supervisor if a `permanent` process dies first.
+
+### Shutdown
+
+when the top-level `supervisor` is asked to `terminate`, it calls `exit(ChildPid, shutdown)` on each of the `Pid`s. if the `child` is a `worker` and trapping exits, it'll call its own `terminate` function. otherwise, it's just going to die. when a `supervisor` gets the `shutdown signal`, it will forward it to its own `children` the same way.
+
+so the `Shutdown` value is used to give **a deadline on the termination**.
+
+- it could be milliseconds or `infinity`. if the time passes and nothing happens, the process is then brutally killed with `exit(Pid, kill)`.
+- it also could be `brutal_kill` if you don't care about the child and it can pretty much die without any consequences without any timeout needed. it will make it so the child is killed with `exit(Pid, kill)`
+
+**note that `simple_one_for_one` children are not respecting this rule** with the `Shutdown` time. in the case of `simple_one_for_one`, the supervisor will just exit and it will be left to each of the workers to terminate on their own, after their supervisor is gone.
+
+### Type
+
+`Type` simply lets the supervisor know whether the child is a `worker` or a `supervisor`.
+
+### Modules
+
+`Modules` is a list of one element, the name of the callback module used by the child behavior. the exception to that is when you have callback modules whose identity you do not know beforehand (such as event handlers in an event manager). in this case, the value of `Modules` should be **`dynamic`** so that the whole OTP system knows who to contact when using more advanced features, such as `releases`.
+
+</details>
 
 ***
 
