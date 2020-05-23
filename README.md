@@ -3171,6 +3171,26 @@ this is what OTP really is all about: taking all the **generic** components, ext
 this separation is good for a couple of things, such as complexity, testing, bug fixing, etc.
 
 </details>
+<details><summary><strong>behaviour</strong></summary><br>
+
+a behaviour is basically a way for a module to specify functions it expects another module to have. the behaviour is the contract sealing the deal between the well-behaved generic part of the code and the specific, error-prone part of the code (yours).
+
+note: both `behavior` and `behaviour` are accepted by the Erlang compiler.
+
+defining your own behaviours is really simple. you just need to export a function called `behaviour_info/1` implemented as follows:
+
+    -module(my_behaviour).
+    -export([behaviour_info/1]).
+
+    %% init/1, some_fun/0 and other/3 are now expected callbacks
+
+    behaviour_info(callbacks) ->
+      [{init,1}, {some_fun, 0}, {other, 3}];
+    behaviour_info(_) -> undefined.
+
+you can just use `-behaviour(my_behaviour).` in a module implementing them to get compiler warnings if you forgot a function.
+
+</details>
 <details><summary><strong>gen_server</strong></summary><br>
 
 **`gen_server`** is an `OTP` behaviour module for implementing the server of a client-server relation. it stands for **Generic Server**, and it’s basically an interface to build processes that behaves like a server. every module that implements it will have a standard set of interface functions.
@@ -3295,26 +3315,6 @@ this function is pretty much the direct opposite of `init/1` so whatever was don
 > **see [kitty_gen_server.erl](./code/otp/gen_server/kitty_gen_server.erl)**
 
 this could be tested in the same way used in `basic_server` section.
-
-</details>
-<details><summary><strong>behaviour</strong></summary><br>
-
-a behaviour is basically a way for a module to specify functions it expects another module to have. the behaviour is the contract sealing the deal between the well-behaved generic part of the code and the specific, error-prone part of the code (yours).
-
-note: both `behavior` and `behaviour` are accepted by the Erlang compiler.
-
-defining your own behaviours is really simple. you just need to export a function called `behaviour_info/1` implemented as follows:
-
-    -module(my_behaviour).
-    -export([behaviour_info/1]).
-
-    %% init/1, some_fun/0 and other/3 are now expected callbacks
-
-    behaviour_info(callbacks) ->
-      [{init,1}, {some_fun, 0}, {other, 3}];
-    behaviour_info(_) -> undefined.
-
-you can just use `-behaviour(my_behaviour).` in a module implementing them to get compiler warnings if you forgot a function.
 
 </details>
 <details><summary><strong>sync vs async</strong></summary><br>
@@ -4372,7 +4372,7 @@ officially: "a semaphore restricts the number of simultaneous users of a shared 
 - [Erlang Performance Lab](https://github.com/erlanglab/erlangpl)
 
 ## Todo
-- [ ] See and [error_logger](http://erlang.org/doc/man/error_logger.html) with `gen_event`
+- [ ] See and use [error_logger](http://erlang.org/doc/man/error_logger.html) with `gen_event`
 
 ***
 
