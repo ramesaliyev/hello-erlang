@@ -3770,6 +3770,10 @@ so the `Shutdown` value is used to give **a deadline on the termination**.
 
 `Modules` is a list of one element, the name of the callback module used by the child behavior. the exception to that is when you have callback modules whose identity you do not know beforehand (such as event handlers in an event manager). in this case, the value of `Modules` should be **`dynamic`** so that the whole OTP system knows who to contact when using more advanced features, such as `releases`.
 
+# example
+
+> **see [musicians](./code/projects/musicians)** project code, and check further explanation under projects section
+
 </details>
 
 ***
@@ -4071,6 +4075,32 @@ taking advantage of accumulator
 
     curling:game_info(EventManager).
     -> {[{"Eagles",3},{"Pigeons",2}],{round,2}}
+
+</details>
+<details><summary><strong>rsync band</strong></summary><br>
+
+> for full explanation see [tutorial](https://learnyousomeerlang.com/supervisors) and for complete code see [rsync_band](./code/projects/rsync_band)
+
+use case of a musician:
+
+    musicians:start_link(bass, bad).
+
+    -> Musician Valerie Perlstein, playing the bass entered the room
+    -> {ok,<0.81.0>}
+
+    -> Valerie Perlstein produced sound!
+    -> Valerie Perlstein played a false note. Uh oh
+    -> Valerie Perlstein sucks! kicked that member out of the band! (bass)
+
+    -> =ERROR REPORT==== 24-May-2020::15:23:36.837502 ===
+    -> ** Generic server bass terminating
+    -> ** Last message in was timeout
+    -> ** When Server state == {state,"Valerie Perlstein","bass",bad}
+    -> ** Reason for termination ==
+    -> ** bad_note
+
+    -> =CRASH REPORT==== 24-May-2020::15:23:36.837916 ===
+    -> ...
 
 </details>
 
