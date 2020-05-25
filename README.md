@@ -4102,6 +4102,225 @@ use case of a musician:
     -> =CRASH REPORT==== 24-May-2020::15:23:36.837916 ===
     -> ...
 
+use with supervisor
+
+    band_supervisor:start_link(lenient).
+
+    -> Musician Janet Terese, playing the singer entered the room
+    -> Musician Carlos Jamal, playing the bass entered the room
+    -> Musician Phoebe Frizzle, playing the drum entered the room
+    -> Musician Wanda Ramon, playing the keytar entered the room
+    -> {ok,<0.81.0>}
+
+    -> Phoebe Frizzle produced sound!
+    -> Janet Terese produced sound!
+    -> Carlos Jamal produced sound!
+    -> Wanda Ramon produced sound!
+    ... members produce sound multiple times ...
+
+    -> Phoebe Frizzle played a false note. Uh oh
+    -> Phoebe Frizzle sucks! kicked that member out of the band! (drum)
+
+    =ERROR REPORT==== 25-May-2020::23:18:01.837654 ===
+    ** Generic server drum terminating
+    ** Last message in was timeout
+    ** When Server state == {state,"Phoebe Frizzle","drum",bad}
+    ** Reason for termination ==
+    ** bad_note
+
+    -> Musician Tim Frizzle, playing the drum entered the room
+
+    =CRASH REPORT==== 25-May-2020::23:18:01.837957 ===
+      crasher:
+        initial call: musicians:init/1
+        pid: <0.84.0>
+        registered_name: drum
+        exception exit: bad_note
+          in function  gen_server:handle_common_reply/8 (gen_server.erl, line 751)
+        ancestors: [band_supervisor,<0.79.0>]
+        message_queue_len: 0
+        messages: []
+        links: [<0.81.0>]
+        dictionary: [{random_seed,{8272,19405,7939}}]
+        trap_exit: true
+        status: running
+        heap_size: 987
+        stack_size: 27
+        reductions: 3534
+      neighbours:
+
+    =SUPERVISOR REPORT==== 25-May-2020::23:18:01.840357 ===
+        supervisor: {local,band_supervisor}
+        errorContext: child_terminated
+        reason: bad_note
+        offender: [{pid,<0.84.0>},
+                  {id,drum},
+                  {mfargs,{musicians,start_link,[drum,bad]}},
+                  {restart_type,transient},
+                  {shutdown,1000},
+                  {child_type,worker}]
+
+
+    -> Wanda Ramon produced sound!
+    -> Tim Frizzle produced sound!
+    -> Janet Terese produced sound!
+    -> Carlos Jamal produced sound!
+    -> Wanda Ramon produced sound!
+
+    -> Tim Frizzle played a false note. Uh oh
+    -> Tim Frizzle sucks! kicked that member out of the band! (drum)
+
+    =ERROR REPORT==== 25-May-2020::23:18:02.794660 ===
+    ** Generic server drum terminating
+    ** Last message in was timeout
+    ** When Server state == {state,"Tim Frizzle","drum",bad}
+    ** Reason for termination ==
+    ** bad_note
+
+    -> Musician Phoebe Franklin, playing the drum entered the room
+
+    =CRASH REPORT==== 25-May-2020::23:18:02.794831 ===
+      crasher:
+        initial call: musicians:init/1
+        pid: <0.87.0>
+        registered_name: drum
+        exception exit: bad_note
+          in function  gen_server:handle_common_reply/8 (gen_server.erl, line 751)
+        ancestors: [band_supervisor,<0.79.0>]
+        message_queue_len: 0
+        messages: []
+        links: [<0.81.0>]
+        dictionary: [{random_seed,{8821,23026,29899}}]
+        trap_exit: true
+        status: running
+        heap_size: 1598
+        stack_size: 27
+        reductions: 3318
+      neighbours:
+
+    =SUPERVISOR REPORT==== 25-May-2020::23:18:02.795222 ===
+        supervisor: {local,band_supervisor}
+        errorContext: child_terminated
+        reason: bad_note
+        offender: [{pid,<0.87.0>},
+                  {id,drum},
+                  {mfargs,{musicians,start_link,[drum,bad]}},
+                  {restart_type,transient},
+                  {shutdown,1000},
+                  {child_type,worker}]
+
+    -> Janet Terese produced sound!
+    -> Carlos Jamal produced sound!
+    -> Wanda Ramon produced sound!
+    -> Phoebe Franklin produced sound!
+    ... members produce sound multiple times ...
+
+    -> Phoebe Franklin played a false note. Uh oh
+    -> Phoebe Franklin sucks! kicked that member out of the band! (drum)
+
+    =ERROR REPORT==== 25-May-2020::23:18:06.448676 ===
+    ** Generic server drum terminating
+    ** Last message in was timeout
+    ** When Server state == {state,"Phoebe Franklin","drum",bad}
+    ** Reason for termination ==
+    ** bad_note
+
+    -> Musician Janet Ramon, playing the drum entered the room
+
+    =CRASH REPORT==== 25-May-2020::23:18:06.448991 ===
+      crasher:
+        initial call: musicians:init/1
+        pid: <0.88.0>
+        registered_name: drum
+        exception exit: bad_note
+          in function  gen_server:handle_common_reply/8 (gen_server.erl, line 751)
+        ancestors: [band_supervisor,<0.79.0>]
+        message_queue_len: 0
+        messages: []
+        links: [<0.81.0>]
+        dictionary: [{random_seed,{12712,17697,5626}}]
+        trap_exit: true
+        status: running
+        heap_size: 987
+        stack_size: 27
+        reductions: 3421
+      neighbours:
+
+    =SUPERVISOR REPORT==== 25-May-2020::23:18:06.449570 ===
+        supervisor: {local,band_supervisor}
+        errorContext: child_terminated
+        reason: bad_note
+        offender: [{pid,<0.88.0>},
+                  {id,drum},
+                  {mfargs,{musicians,start_link,[drum,bad]}},
+                  {restart_type,transient},
+                  {shutdown,1000},
+                  {child_type,worker}]
+
+    -> Wanda Ramon produced sound!
+    -> Janet Terese produced sound!
+    -> Carlos Jamal produced sound!
+    ... members produce sound multiple times ...
+
+    -> Janet Ramon played a false note. Uh oh
+    -> Janet Ramon sucks! kicked that member out of the band! (drum)
+
+    =ERROR REPORT==== 25-May-2020::23:18:09.249975 ===
+    ** Generic server drum terminating
+    ** Last message in was timeout
+    ** When Server state == {state,"Janet Ramon","drum",bad}
+    ** Reason for termination ==
+    ** bad_note
+
+    -> The manager is mad and fired the whole band! Wanda Ramon just got back to playing in the subway
+
+    =CRASH REPORT==== 25-May-2020::23:18:09.250365 ===
+      crasher:
+        initial call: musicians:init/1
+        pid: <0.89.0>
+        registered_name: drum
+        exception exit: bad_note
+          in function  gen_server:handle_common_reply/8 (gen_server.erl, line 751)
+        ancestors: [band_supervisor,<0.79.0>]
+        message_queue_len: 0
+        messages: []
+        links: [<0.81.0>]
+        dictionary: [{random_seed,{21470,23940,18335}}]
+        trap_exit: true
+        status: running
+        heap_size: 987
+        stack_size: 27
+        reductions: 3269
+      neighbours:
+
+    =SUPERVISOR REPORT==== 25-May-2020::23:18:09.251116 ===
+        supervisor: {local,band_supervisor}
+        errorContext: child_terminated
+        reason: bad_note
+        offender: [{pid,<0.89.0>},
+                  {id,drum},
+                  {mfargs,{musicians,start_link,[drum,bad]}},
+                  {restart_type,transient},
+                  {shutdown,1000},
+                  {child_type,worker}]
+
+    -> The manager is mad and fired the whole band! Carlos Jamal just got back to playing in the subway
+
+    =SUPERVISOR REPORT==== 25-May-2020::23:18:09.251359 ===
+        supervisor: {local,band_supervisor}
+        errorContext: shutdown
+        reason: reached_max_restart_intensity
+        offender: [{pid,<0.89.0>},
+                  {id,drum},
+                  {mfargs,{musicians,start_link,[drum,bad]}},
+                  {restart_type,transient},
+                  {shutdown,1000},
+                  {child_type,worker}]
+
+    -> The manager is mad and fired the whole band! Janet Terese just got back to playing in the subway
+
+    ** exception error: shutdown
+
 </details>
 
 ***
