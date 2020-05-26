@@ -3770,6 +3770,45 @@ so the `Shutdown` value is used to give **a deadline on the termination**.
 
 `Modules` is a list of one element, the name of the callback module used by the child behavior. the exception to that is when you have callback modules whose identity you do not know beforehand (such as event handlers in an event manager). in this case, the value of `Modules` should be **`dynamic`** so that the whole OTP system knows who to contact when using more advanced features, such as `releases`.
 
+# dynamic supervision
+
+## methods
+
+**`start_child(SupervisorNameOrPid, ChildSpec)`**<br>
+this adds a child specification to the list and starts the child with it
+
+**`terminate_child(SupervisorNameOrPid, ChildId)`**<br>
+terminates or `brutal_kills` the child. the child specification is left in the supervisor
+
+**`restart_child(SupervisorNameOrPid, ChildId)`**<br>
+uses the child specification to get things rolling
+
+**`delete_child(SupervisorNameOrPid, ChildId)`**<br>
+gets rid of the `ChildSpec` of the specified child
+
+**`check_childspecs([ChildSpec])`**<br>
+makes sure a child specification is valid. you can use this to try it before using `start_child/2`
+
+**`count_children(SupervisorNameOrPid)`**<br>
+counts all the children under the supervisor and gives you a little comparative list of who's active, how many specs there are, how many are supervisors and how many are workers
+
+**`which_children(SupervisorNameOrPid)`**<br>
+gives you a list of all the children under the supervisor.
+
+## many children
+
+this approach is good for little number of children. this won't work very well when you need quick access to many children because; the internal representation is a list.
+
+for many children `simple_one_for_one` can be used. the problem with it is that it will not allow you to manually restart a child, delete it or terminate it. all the children are held in a dictionary, which makes looking them up fast. there is also a single child specification for all children under the supervisor. this will save you memory and time in that you will never need to delete a child yourself or store any child specification.
+
+when using a `simple_one_for_one` the argument list in the `{M,F,A}` tuple is going to be appended to what you call it with when you do `supervisor:start_child(Sup, Args)`. instead of doing `supervisor:start_child(Sup, Spec)`, which would call `erlang:apply(M,F,A)`, we now have `supervisor:start_child(Sup, Args)`, which calls erlang:apply(M,F,A++Args).
+
+`erlang:apply(M, F, A)` is for calling a function and passing the elements in Args as arguments.
+
+update: it is possible to terminate `simple_one_for_one` children with the function `supervisor:terminate_child(SupRef, Pid)`. simple one for one supervision schemes are now possible to make fully dynamic and have become an all-around interesting choice for when you have many processes running a single type of process.
+
+use standard supervisors dynamically only when you know with certainty that you will have few children to supervise and/or that they won't need to be manipulated with any speed and rather infrequently. for other kinds of dynamic supervision, use `simple_one_for_one` where possible.
+
 # example
 
 > **see [musicians](./code/projects/musicians)** project code, and check further explanation under projects section
@@ -4320,6 +4359,64 @@ use with supervisor
     -> The manager is mad and fired the whole band! Janet Terese just got back to playing in the subway
 
     ** exception error: shutdown
+
+use with dynamic supervision
+
+    band_supervisor:start_link(lenient).
+    -> {ok,<0.101.0>}
+
+    -> supervisor:which_children(band_supervisor).
+    -> [{keytar,<0.85.0>,worker,[musicians]},
+        {drum,<0.84.0>,worker,[musicians]},
+        {bass,<0.83.0>,worker,[musicians]},
+        {singer,<0.82.0>,worker,[musicians]}]
+
+    supervisor:terminate_child(band_supervisor, drum).
+    -> ok
+
+    supervisor:terminate_child(band_supervisor, singer).
+    -> ok
+
+    supervisor:restart_child(band_supervisor, singer).
+    -> {ok,<0.90.0>}
+
+    supervisor:delete_child(band_supervisor, drum).
+    -> ok
+
+    supervisor:restart_child(band_supervisor, drum).
+    -> {error,not_found}
+
+    supervisor:count_children(band_supervisor).
+    -> [{specs,3},{active,3},{supervisors,0},{workers,3}]
+
+using dynamic supervision with `simple_one_for_one`
+
+    band_supervisor:start_link(jamband).
+    -> {ok,<0.81.0>}
+
+    supervisor:start_child(band_supervisor, [djembe, good]).
+    -> Musician Tim Franklin, playing the djembe entered the room
+    -> {ok,<0.85.0>}
+    -> Tim Franklin produced sound!
+
+    supervisor:start_child(band_supervisor, [djembe, good]).
+    -> {error,{already_started,<0.85.0>}}
+
+    %%% this happens because we register the djembe player as djembe as part of the start call to our gen_server. If we didn't name them or used a different name for each, it wouldn't cause a problem.
+
+    supervisor:start_child(band_supervisor, [drum, good]).
+    -> Musician Tim Perlstein, playing the drum entered the room
+    -> {ok,<0.88.0>}
+    -> Tim Perlstein produced sound!
+
+    % wont work
+    supervisor:terminate_child(band_supervisor, djembe).
+    -> {error,simple_one_for_one}
+
+    % this works
+    musicians:stop(djembe).
+    -> Tim Franklin left the room (djembe)
+    -> ok
 
 </details>
 
