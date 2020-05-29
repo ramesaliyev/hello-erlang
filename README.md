@@ -3814,6 +3814,11 @@ use standard supervisors dynamically only when you know with certainty that you 
 > **see [musicians](./code/projects/musicians)** project code, and check further explanation under projects section
 
 </details>
+<details><summary><strong>an otp application</strong></summary><br>
+
+an Erlang application is a group of related code and processes. an OTP application specifically uses OTP behaviours for its processes, and then wraps them in a very specific structure that tells the VM how to set everything up and then tear it down.
+
+</details>
 
 ***
 
@@ -4417,6 +4422,11 @@ using dynamic supervision with `simple_one_for_one`
     musicians:stop(djembe).
     -> Tim Franklin left the room (djembe)
     -> ok
+
+</details>
+<details><summary><strong>process pool</strong></summary><br>
+
+
 
 </details>
 
