@@ -2,6 +2,7 @@
 These are notes and mostly quotes i take about Erlang in my learning process.<br>
 Check [resources](#resources) section to see where I take quotes from.<br>
 Note that this repo is always a *work in progress*.
+(I couldn't find the time to complete the book yet.)
 
 ![first make it work, then make it beautiful, and only if you need to, make it fast.](./assets/joe_armstrong_make_it_beautiful.jpeg)
 
